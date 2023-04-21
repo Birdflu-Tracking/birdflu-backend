@@ -1,29 +1,31 @@
+import { Symptoms } from "./lib/commons";
+import { DocumentReference } from "@google-cloud/firestore";
+
 export type User = {
   firstName: string;
   lastName: string;
   email: string;
   phoneNumber: number;
-  outletName: string;
   outletAddress: string;
   type: "farmer" | "seller" | "distributor" | "reporter";
 };
 
 export type Farmer = {
-  userId: string;
+  userId: DocumentReference;
   farmName: string;
   latitude: number;
   longitude: number;
 };
 
 export type Distributor = {
-  userId: string;
+  userId: DocumentReference;
   distributorName: string;
   latitude: number;
   longitude: number;
 };
 
 export type Seller = {
-  userId: string;
+  userId: DocumentReference;
   sellerShopName: string;
   latitude: number;
   longitude: number;
@@ -50,13 +52,6 @@ export type UserReports = {
   createdAt: Date;
   symptomsStartDate: Date;
 };
-
-type Symptoms =
-  | "depression"
-  | "combs_wattle_blush_face"
-  | "swollen_face_region"
-  | "narrowness_of_eyes"
-  | "balance_desorder";
 
 export type FarmReports = {
   farmId: string;
