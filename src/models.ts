@@ -7,6 +7,7 @@ export type User = {
   email: string;
   phoneNumber: number;
   outletAddress: string;
+  firebaseAuthUid: string,
   type: "farmer" | "seller" | "distributor" | "reporter";
 };
 
