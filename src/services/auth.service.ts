@@ -1,5 +1,5 @@
 import { User } from "../models";
-import { userCollection } from "./initDb";
+import { healthWorkerCollection, userCollection } from "./initDb";
 
 export const createUser = async (user: User) => {
   const res = await userCollection.add(user);
@@ -7,9 +7,7 @@ export const createUser = async (user: User) => {
   return res.id;
 };
 
-export const deleteUser = async (email: string) => {
-
-}
+export const deleteUser = async (email: string) => {};
 
 export const checkUserAlreadyExist = async (user: User) => {
   const res = await userCollection.where("email", "==", user.email).get();
@@ -20,12 +18,25 @@ export const checkUserAlreadyExist = async (user: User) => {
 };
 
 export const getUser = async (firebaseAuthUid: string) => {
-  console.log(firebaseAuthUid)
-  const res = await userCollection.where("firebaseAuthUid", "==", firebaseAuthUid).get();
+  const res = await userCollection
+    .where("firebaseAuthUid", "==", firebaseAuthUid)
+    .get();
 
   if (res.empty == true) {
     throw Error("User does not exist invalid credentials");
   }
 
   return res.docs[0];
-}
+};
+
+export const getHealthWorker = async (firebaseAuthUid: string) => {
+  const res = await healthWorkerCollection
+    .where("firebaseAuthUid", "==", firebaseAuthUid)
+    .get();
+
+  if (res.empty == true) {
+    throw Error("Health Worker does not exist invalid credentials");
+  }
+
+  return res.docs[0];
+};

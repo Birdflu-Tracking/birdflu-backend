@@ -16,4 +16,4 @@ export type Symptoms =
   | "narrowness_of_eyes"
   | "balance_desorder";
 
-export type UserType = "farmer" | "distributor" | "seller";
+export type UserType = "farmer" | "distributor" | "seller" | "health-worker";

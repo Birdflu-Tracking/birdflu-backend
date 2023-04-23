@@ -1,5 +1,5 @@
-import { Symptoms } from "./lib/commons";
-import { DocumentReference } from "@google-cloud/firestore";
+import { Symptoms, UserType } from "./lib/commons";
+import { DocumentReference, Timestamp, v1 } from "@google-cloud/firestore";
 
 export type User = {
   firstName: string;
@@ -7,8 +7,8 @@ export type User = {
   email: string;
   phoneNumber: number;
   outletAddress: string;
-  firebaseAuthUid: string,
-  type: "farmer" | "seller" | "distributor" | "reporter";
+  firebaseAuthUid: string;
+  type: UserType;
 };
 
 export type Farmer = {
@@ -33,7 +33,11 @@ export type Seller = {
 };
 
 export type HealthWorker = {
-  userId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: number;
+  firebaseAuthUid: string;
   assignedAt: Date;
 };
 
@@ -44,6 +48,7 @@ export type Batch = {
   distributorId: string;
   sellerId: string;
   infected: boolean;
+  currentOwner: DocumentReference;
 };
 
 export type UserReports = {
@@ -57,15 +62,11 @@ export type UserReports = {
 export type FarmReports = {
   farmId: string;
   HealthWorkerId: string;
-  initiatedAt: Date;
-  submittedAt: Date;
+  initiatedAt: Timestamp;
+  submittedAt: Timestamp;
+  submitted: boolean;
   predictionResult: boolean;
   chickenSymptoms: Array<Array<Symptoms>>;
-};
-
-export type SymptomsReport = {
-  farmerId: string;
-  symptoms: Array<string>;
 };
 
 export type NFCTags = {

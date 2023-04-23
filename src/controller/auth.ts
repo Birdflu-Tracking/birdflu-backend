@@ -1,6 +1,11 @@
 import { Request, Response, Router } from "express";
 import { Distributor, Farmer, Seller, User } from "../models";
-import { checkUserAlreadyExist, createUser, getUser } from "../services/auth.service";
+import {
+  checkUserAlreadyExist,
+  createUser,
+  getHealthWorker,
+  getUser,
+} from "../services/auth.service";
 import {
   db,
   distributorCollection,
@@ -50,7 +55,7 @@ authRouter.post("/create/farmer", async (req: Request, res: Response) => {
       phoneNumber: Number(phoneNumber),
       outletAddress: outletAddress,
       type: "farmer",
-      firebaseAuthUid: req.session.userData.firebaseAuthUid
+      firebaseAuthUid: req.session.userData.firebaseAuthUid,
     };
 
     await checkUserAlreadyExist(user);
@@ -68,19 +73,18 @@ authRouter.post("/create/farmer", async (req: Request, res: Response) => {
         !addedFarmer
           ? res.status(500).json({ message: "Farmer creation failed" })
           : res.status(200).json({
-            message: "Created Farmer",
-            userId: createdUser,
-            farmId: addedFarmer.id,
-          });
+              message: "Created Farmer",
+              userId: createdUser,
+              farmId: addedFarmer.id,
+            });
       } catch (error) {
-        await db.doc(`Users/${createdUser}`).delete()
-        throw new Error(error)
+        await db.doc(`Users/${createdUser}`).delete();
+        throw new Error(error);
       }
     } else {
       res.status(500).json({ message: "User creation failed" });
     }
   } catch (error: any) {
-    // await db.doc(`Users/${(await userCollection.where("email", "==", req.body.email).get()).docs[0].id}`).delete()
     console.log(error);
     res.status(500).json({
       message: "Error while creating farmer",
@@ -115,7 +119,7 @@ authRouter.post("/create/distributor", async (req: Request, res: Response) => {
       phoneNumber: Number(data.phoneNumber),
       outletAddress: data.outletAddress,
       type: "distributor",
-      firebaseAuthUid: req.session.userData.firebaseAuthUid
+      firebaseAuthUid: req.session.userData.firebaseAuthUid,
     };
 
     await checkUserAlreadyExist(user);
@@ -133,13 +137,13 @@ authRouter.post("/create/distributor", async (req: Request, res: Response) => {
         !addedDistributor
           ? res.status(500).json({ message: "Distributor creation failed" })
           : res.status(200).json({
-            message: "Created distributor",
-            userId: createdUser,
-            distributorId: addedDistributor.id,
-          });
+              message: "Created distributor",
+              userId: createdUser,
+              distributorId: addedDistributor.id,
+            });
       } catch (error) {
-        await db.doc(`Users/${createdUser}`).delete()
-        throw new Error(error)
+        await db.doc(`Users/${createdUser}`).delete();
+        throw new Error(error);
       }
     } else {
       res.status(500).json({ message: "User creation failed" });
@@ -179,7 +183,7 @@ authRouter.post("/create/seller", async (req: Request, res: Response) => {
       phoneNumber: Number(data.phoneNumber),
       outletAddress: data.outletAddress,
       type: "seller",
-      firebaseAuthUid: req.session.userData.firebaseAuthUid
+      firebaseAuthUid: req.session.userData.firebaseAuthUid,
     };
 
     await checkUserAlreadyExist(user);
@@ -197,13 +201,13 @@ authRouter.post("/create/seller", async (req: Request, res: Response) => {
         !addedSeller
           ? res.status(500).json({ message: "Seller creation failed" })
           : res.status(200).json({
-            message: "Created Seller",
-            userId: createdUser,
-            sellerId: addedSeller.id,
-          });
+              message: "Created Seller",
+              userId: createdUser,
+              sellerId: addedSeller.id,
+            });
       } catch (error) {
-        await db.doc(`Users/${createdUser}`).delete()
-        throw new Error(error)
+        await db.doc(`Users/${createdUser}`).delete();
+        throw new Error(error);
       }
     } else {
       res.status(500).json({ message: "User creation failed" });
@@ -218,23 +222,75 @@ authRouter.post("/create/seller", async (req: Request, res: Response) => {
   }
 });
 
+// This route will be used to login the user and create a session.
 authRouter.post("/login", async (req: Request, res: Response) => {
   try {
     const user = await getUser(req.session.userData.firebaseAuthUid);
+    if (user.data().type == "farmer") {
+      req.session.userData = {
+        ...req.session.userData,
+        loggedIn: true,
+        userId: user.id,
+        userType: user.data().type,
+        outletId: (
+          await farmerCollection
+            .where("userId", "==", db.doc(`Users/${user.id}`))
+            .get()
+        ).docs[0].id,
+      };
+    } else if (user.data().type == "distributor") {
+      req.session.userData = {
+        ...req.session.userData,
+        loggedIn: true,
+        userId: user.id,
+        userType: user.data().type,
+        outletId: (
+          await distributorCollection
+            .where("userId", "==", db.doc(`Users/${user.id}`))
+            .get()
+        ).docs[0].id,
+      };
+    } else if (user.data().type == "seller") {
+      req.session.userData = {
+        ...req.session.userData,
+        loggedIn: true,
+        userId: user.id,
+        userType: user.data().type,
+        outletId: (
+          await sellerCollection
+            .where("userId", "==", db.doc(`Users/${user.id}`))
+            .get()
+        ).docs[0].id,
+      };
+    }
+    return res.status(200).json({ user: user.data() });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Error while logging in",
+      error: error.message,
+    });
+  }
+});
+
+// This route is used to log the health worker in.
+authRouter.post("/login/health-worker", async (req: Request, res: Response) => {
+  try {
+    const user = await getHealthWorker(req.session.userData.firebaseAuthUid);
 
     req.session.userData = {
       ...req.session.userData,
       loggedIn: true,
       userId: user.id,
-      userType: user.data().type
-    }
+      userType: "health-worker",
+    };
 
-    return res.status(200).json({ user: user.data() })
+    return res.status(200).json({ user: user.data() });
   } catch (error) {
     console.log(error);
     res.status(500).json({
       message: "Error while logging in",
-      error: error.message
-    })
+      error: error.message,
+    });
   }
 });
