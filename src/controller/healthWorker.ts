@@ -2,7 +2,6 @@ import { Request, Response, Router } from "express";
 import { FarmReports } from "../models";
 import { Timestamp } from "@google-cloud/firestore";
 import { batchCollection, db, farmReportsCollection } from "../services/initDb";
-import { QueryDocumentSnapshot } from "firebase-functions/v1/firestore";
 
 export const healthWorkerRouter = Router();
 
@@ -30,11 +29,9 @@ healthWorkerRouter.post(
       const createdRequest = await farmReportsCollection.add(farmReport);
       !createdRequest.id
         ? res.status(500).json({ message: "Error while creating request" })
-        : res
-            .status(200)
-            .json({
-              message: "Send request successfully to " + req.body.farmId,
-            });
+        : res.status(200).json({
+            message: "Send request successfully to " + req.body.farmId,
+          });
     } catch (error) {
       console.log(error);
       res.status(500).json({
@@ -93,7 +90,8 @@ healthWorkerRouter.get("/reports", async (req: Request, res: Response) => {
         });
 
         reports.push({
-          data: doc.data(),
+          ...doc.data(),
+          reportId: doc.id,
           sellersPossiblyInfected: [...new Set(sellersPossiblyInfected)],
         });
         if (index === farmReportsCollectionData.docs.length - 1) resolve();

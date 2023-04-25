@@ -64,7 +64,7 @@ authRouter.post("/create/farmer", async (req: Request, res: Response) => {
       try {
         const farmer: Farmer = {
           farmName: farmName,
-          userId: db.doc("users/" + createdUser),
+          userId: db.doc("Users/" + createdUser),
           latitude: Number(latitude),
           longitude: Number(longitude),
         };
@@ -128,7 +128,7 @@ authRouter.post("/create/distributor", async (req: Request, res: Response) => {
       try {
         const distributor: Distributor = {
           distributorName: data.distributorName,
-          userId: db.doc("users/" + createdUser),
+          userId: db.doc("Users/" + createdUser),
           latitude: Number(data.latitude),
           longitude: Number(data.longitude),
         };
@@ -192,7 +192,7 @@ authRouter.post("/create/seller", async (req: Request, res: Response) => {
       try {
         const seller: Seller = {
           sellerShopName: data.sellerShopName,
-          userId: db.doc("users/" + createdUser),
+          userId: db.doc("Users/" + createdUser),
           latitude: Number(data.latitude),
           longitude: Number(data.longitude),
         };

@@ -66,7 +66,7 @@ export type FarmReports = {
   submittedAt: Timestamp;
   submitted: boolean;
   predictionResult: boolean;
-  chickenSymptoms: Array<Array<Symptoms>>;
+  chickenSymptoms: Array<object>;
 };
 
 export type NFCTags = {
