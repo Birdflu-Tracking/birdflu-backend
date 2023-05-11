@@ -53,10 +53,12 @@ export type Batch = {
 
 export type UserReports = {
   reporterName: string;
-  reporterContact: number;
-  sellerId: string;
-  createdAt: Date;
-  symptomsStartDate: Date;
+  // sellerId: string;
+  createdAt: Timestamp;
+  address: string;
+  phoneNumber: number;
+  poultryShop: string;
+  symptomStartDate: Date;
 };
 
 export type FarmReports = {

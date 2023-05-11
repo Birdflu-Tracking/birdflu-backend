@@ -18,6 +18,7 @@ import {
   validateFarmerData,
   validateSellerData,
 } from "../validations";
+import { ResponseCodes } from "../lib/utils";
 
 export const authRouter = Router();
 
@@ -71,18 +72,32 @@ authRouter.post("/create/farmer", async (req: Request, res: Response) => {
 
         const addedFarmer = await farmerCollection.add(farmer);
         !addedFarmer
-          ? res.status(500).json({ message: "Farmer creation failed" })
+          ? res
+              .status(500)
+              .json({
+                message: "Farmer creation failed",
+                success: false,
+                resCode: ResponseCodes.CREATION_FAILED,
+              })
           : res.status(200).json({
               message: "Created Farmer",
               userId: createdUser,
               farmId: addedFarmer.id,
+              success: true,
+              resCode: ResponseCodes.CREATED,
             });
       } catch (error) {
         await db.doc(`Users/${createdUser}`).delete();
         throw new Error(error);
       }
     } else {
-      res.status(500).json({ message: "User creation failed" });
+      res
+        .status(500)
+        .json({
+          message: "User creation failed",
+          success: false,
+          resCode: ResponseCodes.CREATION_FAILED,
+        });
     }
   } catch (error: any) {
     console.log(error);
@@ -90,6 +105,8 @@ authRouter.post("/create/farmer", async (req: Request, res: Response) => {
       message: "Error while creating farmer",
       receivedData: req.body,
       error: error.message,
+      success: false,
+      resCode: ResponseCodes.CREATION_FAILED,
     });
   }
 });

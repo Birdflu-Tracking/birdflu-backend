@@ -9,6 +9,7 @@ import { healthWorkerRouter } from "./controller/healthWorker";
 import session = require("express-session");
 import { db } from "./services/initDb";
 import { auth, verifyUser } from "./middleware/auth";
+import { openRouter } from "./controller/open";
 
 const port = 8080;
 const app = express();
@@ -41,6 +42,7 @@ server.listen(port, async () => {
   app.use("/api/auth", auth, authRouter);
   app.use("/api/user", verifyUser, userRouter);
   app.use("/api/health-worker", verifyUser, healthWorkerRouter);
+  app.use("/open", openRouter);
 
   console.log(`Started server on port ${port}`);
 });

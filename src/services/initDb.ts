@@ -7,6 +7,7 @@ import {
   HEALTH_WORKER_COLLECTION_NAME,
   SELLER_COLLECTION_NAME,
   USER_COLLECTION_NAME,
+  USER_REPORTS_COLLECTION_NAME,
 } from "../lib/commons";
 var serviceAccount = require("../../birdflu-tracker-firebase-adminsdk-3635x-1d9e2bbf9b.json");
 
@@ -25,4 +26,7 @@ export const healthWorkerCollection = db.collection(
 );
 export const farmReportsCollection = db.collection(
   FARM_REPORTS_COLLECTION_NAME
+);
+export const userReportsCollection = db.collection(
+  USER_REPORTS_COLLECTION_NAME
 );

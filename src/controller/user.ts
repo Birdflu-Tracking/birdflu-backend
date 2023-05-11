@@ -151,12 +151,10 @@ userRouter.post("/farmer/report", async (req: Request, res: Response) => {
       req.body.requestId
     );
     !createdReport
-      ? res
-          .status(500)
-          .json({
-            message: "Error while sending report",
-            error: "Internal server error",
-          })
+      ? res.status(500).json({
+          message: "Error while sending report",
+          error: "Internal server error",
+        })
       : res.status(200).json({ message: "Created report successfully" });
   } catch (error) {
     console.log(error);
