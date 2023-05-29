@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request, Response } from "express";
 import cors from "cors";
 import * as bodyParser from "body-parser";
 import * as http from "http";
@@ -43,6 +43,10 @@ server.listen(port, async () => {
   app.use("/api/user", verifyUser, userRouter);
   app.use("/api/health-worker", verifyUser, healthWorkerRouter);
   app.use("/open", openRouter);
+
+  app.get("/", (_req: Request, res: Response) => {
+    res.send("I am alive, connected successfully");
+  });
 
   console.log(`Started server on port ${port}`);
 });

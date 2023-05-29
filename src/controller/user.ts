@@ -11,7 +11,6 @@ import {
   isBatchOwnedbyUser,
   transferBatch,
 } from "../services/user.service";
-import { Timestamp } from "@google-cloud/firestore";
 
 export const userRouter = Router();
 
@@ -19,14 +18,18 @@ export const userRouter = Router();
 userRouter.post("/logout", async (req: Request, res: Response) => {
   try {
     if (!req.session.userData.loggedIn)
-      return res.status(401).send("User not logged in");
+      return res
+        .status(401)
+        .send({ message: "User not logged in", success: false });
 
     req.session.destroy(() => {
       console.log("Destroyed");
-      res.status(200).send("Logged out successfully");
+      res
+        .status(200)
+        .send({ message: "Logged out successfully", success: true });
     });
   } catch (error) {
-    res.status(401).send("User not logged in");
+    res.status(401).send({ message: "User not logged in", success: false });
   }
 });
 
@@ -66,15 +69,21 @@ userRouter.post("/create/batch", async (req: Request, res: Response) => {
       ? res.status(500).json({
           message: "Batch creation failed",
           error: "Internal server error",
+          success: false,
         })
       : res
           .status(200)
-          .json({ message: "Batch created successfully", data: batch });
+          .json({
+            message: "Batch created successfully",
+            data: batch,
+            success: true,
+          });
   } catch (error) {
     console.log(error);
     res.status(500).json({
       message: "Error while creating batch",
       error: error.message,
+      success: false,
     });
   }
 });
@@ -102,8 +111,12 @@ userRouter.post("/transfer/batch", async (req: Request, res: Response) => {
         batchId
       );
       !transferredBatch
-        ? res.status(500).json({ message: "Error while transferring batch" })
-        : res.status(200).json({ message: "Transferred batch successfully" });
+        ? res
+            .status(500)
+            .json({ message: "Error while transferring batch", success: false })
+        : res
+            .status(200)
+            .json({ message: "Transferred batch successfully", success: true });
     } else {
       throw new Error("Batch is already transfered");
     }
@@ -112,6 +125,7 @@ userRouter.post("/transfer/batch", async (req: Request, res: Response) => {
     res.status(500).json({
       message: "Error while transfering batch",
       error: error.message,
+      success: false,
     });
   }
 });
@@ -154,13 +168,17 @@ userRouter.post("/farmer/report", async (req: Request, res: Response) => {
       ? res.status(500).json({
           message: "Error while sending report",
           error: "Internal server error",
+          success: false,
         })
-      : res.status(200).json({ message: "Created report successfully" });
+      : res
+          .status(200)
+          .json({ message: "Created report successfully", success: true });
   } catch (error) {
     console.log(error);
     res.status(500).json({
       message: "Error while reporting symptoms",
       error: error.message,
+      success: false,
     });
   }
 });
@@ -194,12 +212,13 @@ userRouter.get("/batches", async (req: Request, res: Response) => {
         batchesData.push({ ...doc.data(), batchId: doc.id });
       });
     }
-    res.status(200).json({ batches: batchesData });
+    res.status(200).json({ batches: batchesData, success: true });
   } catch (error) {
     console.log(error);
     res.status(500).json({
       message: "Error while getting batches",
       error: error.message,
+      success: false,
     });
   }
 });
@@ -226,12 +245,13 @@ userRouter.get("/sold-batches", async (req: Request, res: Response) => {
         batchesData.push({ ...doc.data(), batchId: doc.id });
       });
     }
-    res.status(200).json({ batches: batchesData });
+    res.status(200).json({ batches: batchesData, success: true });
   } catch (error) {
     console.log(error);
     res.status(500).json({
       message: "Error while getting sold batches",
       error: error.message,
+      success: false,
     });
   }
 });
@@ -253,12 +273,13 @@ userRouter.get("/current/requests", async (req: Request, res: Response) => {
       reports.push({ ...doc.data(), reportId: doc.id });
     });
 
-    res.status(200).json({ reports: reports });
+    res.status(200).json({ reports: reports, success: true });
   } catch (error) {
     console.log(error);
     res.status(500).json({
       message: "Error while getting current requests",
       error: error.message,
+      success: false,
     });
   }
 });

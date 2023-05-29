@@ -11,8 +11,7 @@ export const openRouter = Router();
  * by anyone to submit a flu report in a locality
  *
  * {
- *  firstName: string,
- *  lastName: string,
+ *  reporterName: string,
  *  phoneNumber: number,
  *  poultryShop: string,
  *  symptomStartDate: Date,
@@ -20,41 +19,35 @@ export const openRouter = Router();
  * }
  */
 openRouter.post("/submit-flu-report", async (req: Request, res: Response) => {
-    try {
-        const userReport: UserReports = {
-            reporterName: req.body.firstName + req.body.lastName,
-            phoneNumber: Number(req.body.phoneNumber),
-            address: req.body.address,
-            createdAt: Timestamp.now(),
-            poultryShop: req.body.poultryShop,
-            symptomStartDate: new Date(req.body.symptomStartDate),
-        };
+  try {
+    const userReport: UserReports = {
+      reporterName: req.body.reporterName,
+      phoneNumber: Number(req.body.phoneNumber),
+      address: req.body.address,
+      createdAt: Timestamp.now(),
+      poultryShop: req.body.poultryShop,
+      symptomStartDate: new Date(req.body.symptomStartDate),
+    };
 
-        const addedReportDocRef = await userReportsCollection.add(userReport);
-        !addedReportDocRef
-            ? res
-                .status(ResponseCodes.CREATION_FAILED)
-                .json({
-                    message: "Report generation failed",
-                    success: false,
-                    resCode: ResponseCodes.CREATION_FAILED,
-                })
-            : res
-                .status(ResponseCodes.CREATED)
-                .json({
-                    message: "Successfully generated report",
-                    success: true,
-                    resCode: ResponseCodes.CREATED,
-                });
-    } catch (error) {
-        console.log(error)
-        res
-            .status(500)
-            .json({
-                message: "Error while submitting flu",
-                success: false,
-                resCode: ResponseCodes.INTERNAL_SERVER_ERROR,
-                error: error.message
-            });
-    }
+    const addedReportDocRef = await userReportsCollection.add(userReport);
+    !addedReportDocRef
+      ? res.status(ResponseCodes.CREATION_FAILED).json({
+          message: "Report generation failed",
+          success: false,
+          resCode: ResponseCodes.CREATION_FAILED,
+        })
+      : res.status(ResponseCodes.CREATED).json({
+          message: "Successfully generated report",
+          success: true,
+          resCode: ResponseCodes.CREATED,
+        });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Error while submitting flu",
+      success: false,
+      resCode: ResponseCodes.INTERNAL_SERVER_ERROR,
+      error: error.message,
+    });
+  }
 });

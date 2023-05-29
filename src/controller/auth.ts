@@ -72,13 +72,11 @@ authRouter.post("/create/farmer", async (req: Request, res: Response) => {
 
         const addedFarmer = await farmerCollection.add(farmer);
         !addedFarmer
-          ? res
-              .status(500)
-              .json({
-                message: "Farmer creation failed",
-                success: false,
-                resCode: ResponseCodes.CREATION_FAILED,
-              })
+          ? res.status(500).json({
+              message: "Farmer creation failed",
+              success: false,
+              resCode: ResponseCodes.CREATION_FAILED,
+            })
           : res.status(200).json({
               message: "Created Farmer",
               userId: createdUser,
@@ -91,13 +89,11 @@ authRouter.post("/create/farmer", async (req: Request, res: Response) => {
         throw new Error(error);
       }
     } else {
-      res
-        .status(500)
-        .json({
-          message: "User creation failed",
-          success: false,
-          resCode: ResponseCodes.CREATION_FAILED,
-        });
+      res.status(500).json({
+        message: "User creation failed",
+        success: false,
+        resCode: ResponseCodes.CREATION_FAILED,
+      });
     }
   } catch (error: any) {
     console.log(error);
@@ -152,18 +148,21 @@ authRouter.post("/create/distributor", async (req: Request, res: Response) => {
 
         const addedDistributor = await distributorCollection.add(distributor);
         !addedDistributor
-          ? res.status(500).json({ message: "Distributor creation failed" })
+          ? res
+              .status(500)
+              .json({ message: "Distributor creation failed", success: false })
           : res.status(200).json({
               message: "Created distributor",
               userId: createdUser,
               distributorId: addedDistributor.id,
+              success: true,
             });
       } catch (error) {
         await db.doc(`Users/${createdUser}`).delete();
         throw new Error(error);
       }
     } else {
-      res.status(500).json({ message: "User creation failed" });
+      res.status(500).json({ message: "User creation failed", success: false });
     }
   } catch (error: any) {
     console.log(error);
@@ -171,6 +170,7 @@ authRouter.post("/create/distributor", async (req: Request, res: Response) => {
       message: "Error while creating distributor",
       receivedData: req.body,
       error: error.message,
+      success: false,
     });
   }
 });
@@ -216,18 +216,21 @@ authRouter.post("/create/seller", async (req: Request, res: Response) => {
 
         const addedSeller = await sellerCollection.add(seller);
         !addedSeller
-          ? res.status(500).json({ message: "Seller creation failed" })
+          ? res
+              .status(500)
+              .json({ message: "Seller creation failed", success: false })
           : res.status(200).json({
               message: "Created Seller",
               userId: createdUser,
               sellerId: addedSeller.id,
+              success: true,
             });
       } catch (error) {
         await db.doc(`Users/${createdUser}`).delete();
         throw new Error(error);
       }
     } else {
-      res.status(500).json({ message: "User creation failed" });
+      res.status(500).json({ message: "User creation failed", success: false });
     }
   } catch (error: any) {
     console.log(error);
@@ -235,6 +238,7 @@ authRouter.post("/create/seller", async (req: Request, res: Response) => {
       message: "Error while creating seller",
       receivedData: req.body,
       error: error.message,
+      success: false,
     });
   }
 });
@@ -244,6 +248,7 @@ authRouter.post("/login", async (req: Request, res: Response) => {
   try {
     const user = await getUser(req.session.userData.firebaseAuthUid);
     if (user.data().type == "farmer") {
+      console.log(`Users/${user.id}`);
       req.session.userData = {
         ...req.session.userData,
         loggedIn: true,
@@ -280,12 +285,13 @@ authRouter.post("/login", async (req: Request, res: Response) => {
         ).docs[0].id,
       };
     }
-    return res.status(200).json({ user: user.data() });
+    return res.status(200).json({ user: user.data(), success: true });
   } catch (error) {
     console.log(error);
     res.status(500).json({
       message: "Error while logging in",
       error: error.message,
+      success: false,
     });
   }
 });
@@ -302,12 +308,13 @@ authRouter.post("/login/health-worker", async (req: Request, res: Response) => {
       userType: "health-worker",
     };
 
-    return res.status(200).json({ user: user.data() });
+    return res.status(200).json({ user: user.data(), success: true });
   } catch (error) {
     console.log(error);
     res.status(500).json({
       message: "Error while logging in",
       error: error.message,
+      success: false,
     });
   }
 });

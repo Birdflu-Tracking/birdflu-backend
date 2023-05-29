@@ -4,3 +4,8 @@ export enum ResponseCodes {
   CREATION_FAILED = 409,
   NOT_FOUND = 404,
 }
+
+
+export const getCounts = (records: Array<string>, search: string) => {
+  return records.filter((item) => item === search).length
+}
