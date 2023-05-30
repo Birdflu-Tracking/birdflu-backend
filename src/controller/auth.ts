@@ -43,7 +43,7 @@ authRouter.post("/create/farmer", async (req: Request, res: Response) => {
       email,
       phoneNumber,
       outletAddress,
-      farmName,
+      outletName,
       latitude,
       longitude,
     } = validateFarmerData(req.body);
@@ -63,7 +63,7 @@ authRouter.post("/create/farmer", async (req: Request, res: Response) => {
     if (createdUser) {
       try {
         const farmer: Farmer = {
-          farmName: farmName,
+          farmName: outletName,
           userId: db.doc("users/" + createdUser),
           latitude: Number(latitude),
           longitude: Number(longitude),
@@ -127,7 +127,7 @@ authRouter.post("/create/distributor", async (req: Request, res: Response) => {
     if (createdUser) {
       try {
         const distributor: Distributor = {
-          distributorName: data.distributorName,
+          distributorName: data.outletName,
           userId: db.doc("users/" + createdUser),
           latitude: Number(data.latitude),
           longitude: Number(data.longitude),
@@ -191,7 +191,7 @@ authRouter.post("/create/seller", async (req: Request, res: Response) => {
     if (createdUser) {
       try {
         const seller: Seller = {
-          sellerShopName: data.sellerShopName,
+          sellerShopName: data.outletName,
           userId: db.doc("users/" + createdUser),
           latitude: Number(data.latitude),
           longitude: Number(data.longitude),
