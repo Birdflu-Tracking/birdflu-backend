@@ -53,10 +53,12 @@ export type Batch = {
 
 export type UserReports = {
   reporterName: string;
-  reporterContact: number;
-  sellerId: string;
-  createdAt: Date;
-  symptomsStartDate: Date;
+  // sellerId: string;
+  createdAt: Timestamp;
+  address: string;
+  phoneNumber: number;
+  poultryShop: string;
+  symptomStartDate: Date;
 };
 
 export type FarmReports = {
@@ -66,7 +68,7 @@ export type FarmReports = {
   submittedAt: Timestamp;
   submitted: boolean;
   predictionResult: boolean;
-  chickenSymptoms: Array<Array<Symptoms>>;
+  chickenSymptoms: Array<object>;
 };
 
 export type NFCTags = {
