@@ -71,6 +71,7 @@ userRouter.post("/create/batch", async (req: Request, res: Response) => {
           message: "Batch creation failed",
           error: "Internal server error",
           success: false,
+          data: (await createdBatch.get()).data(),
         })
       : res.status(200).json({
           message: "Batch created successfully",
