@@ -5,6 +5,7 @@ import {
   FARM_COLLECTION_NAME,
   FARM_REPORTS_COLLECTION_NAME,
   HEALTH_WORKER_COLLECTION_NAME,
+  NFC_TAGS_COLLECTION_NAME,
   SELLER_COLLECTION_NAME,
   USER_COLLECTION_NAME,
   USER_REPORTS_COLLECTION_NAME,
@@ -30,3 +31,4 @@ export const farmReportsCollection = db.collection(
 export const userReportsCollection = db.collection(
   USER_REPORTS_COLLECTION_NAME
 );
+export const nfcTagCollection = db.collection(NFC_TAGS_COLLECTION_NAME);

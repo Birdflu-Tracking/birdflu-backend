@@ -4,8 +4,9 @@ import {
   db,
   farmReportsCollection,
   farmerCollection,
+  nfcTagCollection,
 } from "../services/initDb";
-import { Batch } from "../models";
+import { Batch, NFCTags } from "../models";
 import {
   createSymptomReport,
   isBatchOwnedbyUser,
@@ -71,13 +72,11 @@ userRouter.post("/create/batch", async (req: Request, res: Response) => {
           error: "Internal server error",
           success: false,
         })
-      : res
-          .status(200)
-          .json({
-            message: "Batch created successfully",
-            data: batch,
-            success: true,
-          });
+      : res.status(200).json({
+          message: "Batch created successfully",
+          data: batch,
+          success: true,
+        });
   } catch (error) {
     console.log(error);
     res.status(500).json({
@@ -94,20 +93,22 @@ userRouter.post("/create/batch", async (req: Request, res: Response) => {
  *
  * {
  *  batchId: string,
- *  distributorId: string | null,
- *  sellerId: string | null
+ *  nfcCode: string,
  * }
  */
 userRouter.post("/transfer/batch", async (req: Request, res: Response) => {
   try {
-    const { batchId, distributorId, sellerId } = req.body;
+    const { batchId, nfcCode, type } = req.body;
     const batchData = (await batchCollection.doc(batchId).get()).data();
+    const nfcDoc = (
+      await nfcTagCollection.where("nfcCode", "==", nfcCode).get()
+    ).docs[0].data();
 
     if (!batchData.distributorId || !batchData.sellerId) {
       await isBatchOwnedbyUser(batchData, req.session.userData.userId);
       const transferredBatch = await transferBatch(
-        distributorId,
-        sellerId,
+        nfcDoc.type,
+        nfcCode.uid,
         batchId
       );
       !transferredBatch
