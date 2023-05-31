@@ -5,6 +5,7 @@ import {
   farmReportsCollection,
   farmerCollection,
   nfcTagCollection,
+  userCollection,
 } from "../services/initDb";
 import { Batch, NFCTags } from "../models";
 import {
@@ -189,10 +190,22 @@ userRouter.post("/farmer/report", async (req: Request, res: Response) => {
 userRouter.get("/batches", async (req: Request, res: Response) => {
   try {
     const batchesData: Array<object> = [];
+    const currentUser = (
+      await userCollection
+        .where("firebaseAuthUid", "==", req.session.userData.firebaseAuthUid)
+        .get()
+    ).docs[0];
     if (req.session.userData.userType == "farmer") {
+      const farm = await (
+        await farmerCollection
+          .where("userId", "==", db.doc(`Users/${currentUser.id}`))
+          .get()
+      ).docs[0];
+
       (
         await batchCollection
-          .where("farmerId", "==", req.session.userData.outletId)
+          .where("farmerId", "==", farm.id)
+          .where("currentOwner", "==", db.doc(`/Users/${currentUser.id}`))
           .get()
       ).docs.forEach((doc) => {
         batchesData.push({ ...doc.data(), batchId: doc.id });
@@ -200,7 +213,8 @@ userRouter.get("/batches", async (req: Request, res: Response) => {
     } else if (req.session.userData.userType == "seller") {
       (
         await batchCollection
-          .where("sellerId", "==", req.session.userData.outletId)
+          .where("sellerId", "==", req.session.userData.firebaseAuthUid)
+          .where("currentOwner", "==", db.doc(`/Users/${currentUser.id}`))
           .get()
       ).docs.forEach((doc) => {
         batchesData.push({ ...doc.data(), batchId: doc.id });
@@ -208,7 +222,8 @@ userRouter.get("/batches", async (req: Request, res: Response) => {
     } else if (req.session.userData.userType == "distributor") {
       (
         await batchCollection
-          .where("distributorId", "==", req.session.userData.outletId)
+          .where("distributorId", "==", req.session.userData.firebaseAuthUid)
+          .where("currentOwner", "==", db.doc(`/Users/${currentUser.id}`))
           .get()
       ).docs.forEach((doc) => {
         batchesData.push({ ...doc.data(), batchId: doc.id });
