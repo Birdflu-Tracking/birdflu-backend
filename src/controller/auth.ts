@@ -89,7 +89,7 @@ authRouter.post("/create/farmer", async (req: Request, res: Response) => {
         await db.doc(`Users/${createdUser}`).delete();
         throw new Error(error);
       }
-    } else {http://localhost:8080/api/user/create/batch
+    } else {
       res.status(500).json({
         message: "User creation failed",
         success: false,
