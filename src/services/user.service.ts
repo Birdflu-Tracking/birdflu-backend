@@ -21,14 +21,16 @@ export const isBatchOwnedbyUser = async (batchData: any, userId: string) => {
 };
 
 export const transferBatch = async (
-  distributorId: string | null,
-  sellerId: string | null,
+  // distributorId: string | null,
+  // sellerId: string | null,
+  type: "seller" | "distributor",
+  uid: string,
   batchId: string
 ) => {
   try {
-    if (distributorId) {
+    if (type == "distributor") {
       const distributorDoc = (
-        await distributorCollection.doc(distributorId).get()
+        await distributorCollection.doc(uid).get()
       ).data();
       if (!distributorDoc) {
         throw new Error("Distributor not found");
@@ -36,7 +38,7 @@ export const transferBatch = async (
       const userDocRef = (await db.doc(distributorDoc.userId.path).get()).ref;
 
       const transferredBatch = await batchCollection.doc(batchId).update({
-        distributorId: distributorId,
+        distributorId: uid,
         currentOwner: userDocRef,
       });
 
@@ -45,15 +47,15 @@ export const transferBatch = async (
       } else {
         return false;
       }
-    } else if (sellerId) {
-      const sellerDoc = (await sellerCollection.doc(sellerId).get()).data();
+    } else if (type == "seller") {
+      const sellerDoc = (await sellerCollection.doc(uid).get()).data();
       if (!sellerDoc) {
         throw new Error("Seller not found");
       }
       const userDocRef = (await db.doc(sellerDoc.userId.path).get()).ref;
 
       const transferredBatch = await batchCollection.doc(batchId).update({
-        sellerId: sellerId,
+        sellerId: uid,
         currentOwner: userDocRef,
       });
 

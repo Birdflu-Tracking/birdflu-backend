@@ -69,7 +69,7 @@ authRouter.post("/create/farmer", async (req: Request, res: Response) => {
           latitude: Number(latitude),
           longitude: Number(longitude),
           infected: false
-        };
+      };
 
         const addedFarmer = await farmerCollection.add(farmer);
         !addedFarmer
