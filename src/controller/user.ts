@@ -70,14 +70,13 @@ userRouter.post("/create/batch", async (req: Request, res: Response) => {
           message: "Batch creation failed",
           error: "Internal server error",
           success: false,
+          data: (await createdBatch.get()).data(),
         })
-      : res
-          .status(200)
-          .json({
-            message: "Batch created successfully",
-            data: batch,
-            success: true,
-          });
+      : res.status(200).json({
+          message: "Batch created successfully",
+          data: batch,
+          success: true,
+        });
   } catch (error) {
     console.log(error);
     res.status(500).json({
