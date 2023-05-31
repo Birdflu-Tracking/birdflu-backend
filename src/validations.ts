@@ -17,7 +17,7 @@ export const validateFarmerData = (data: any) => {
       email: data.email,
       phoneNumber: data.phoneNumber,
       outletAddress: data.outletAddress,
-      farmName: data.farmName,
+      outletName: data.outletName,
       latitude: data.latitude,
       longitude: data.longitude,
     };
@@ -43,7 +43,7 @@ export const validateDistributorData = (data: any) => {
       email: data.email,
       phoneNumber: data.phoneNumber,
       outletAddress: data.outletAddress,
-      distributorName: data.distributorName,
+      outletName: data.outletName,
       latitude: data.latitude,
       longitude: data.longitude,
     };
@@ -69,7 +69,7 @@ export const validateSellerData = (data: any) => {
       email: data.email,
       phoneNumber: data.phoneNumber,
       outletAddress: data.outletAddress,
-      sellerShopName: data.sellerShopName,
+      outletName: data.outletName,
       latitude: data.latitude,
       longitude: data.longitude,
     };
