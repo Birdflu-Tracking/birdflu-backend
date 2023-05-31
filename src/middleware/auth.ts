@@ -8,7 +8,7 @@ export const auth = (req: Request, res: Response, next: NextFunction) => {
        * These are temperory users created for testing until authentication is done
        * "seller_user323948" "farmer_user323948" "distributor_user323948" "health_user323948"
        */
-      firebaseAuthUid: "health_user323948", //
+      firebaseAuthUid: req.body.firebaseAuthUid, //
       loggedIn: false,
       userId: null,
       outletId: null,

@@ -68,6 +68,7 @@ authRouter.post("/create/farmer", async (req: Request, res: Response) => {
           userId: db.doc("Users/" + createdUser),
           latitude: Number(latitude),
           longitude: Number(longitude),
+          infected: false
         };
 
         const addedFarmer = await farmerCollection.add(farmer);
@@ -88,7 +89,7 @@ authRouter.post("/create/farmer", async (req: Request, res: Response) => {
         await db.doc(`Users/${createdUser}`).delete();
         throw new Error(error);
       }
-    } else {
+    } else {http://localhost:8080/api/user/create/batch
       res.status(500).json({
         message: "User creation failed",
         success: false,
@@ -144,6 +145,7 @@ authRouter.post("/create/distributor", async (req: Request, res: Response) => {
           userId: db.doc("Users/" + createdUser),
           latitude: Number(data.latitude),
           longitude: Number(data.longitude),
+          infected: false
         };
 
         const addedDistributor = await distributorCollection.add(distributor);
@@ -212,6 +214,7 @@ authRouter.post("/create/seller", async (req: Request, res: Response) => {
           userId: db.doc("Users/" + createdUser),
           latitude: Number(data.latitude),
           longitude: Number(data.longitude),
+          infected: false
         };
 
         const addedSeller = await sellerCollection.add(seller);

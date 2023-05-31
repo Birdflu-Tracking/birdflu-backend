@@ -16,6 +16,7 @@ export type Farmer = {
   farmName: string;
   latitude: number;
   longitude: number;
+  infected: boolean;
 };
 
 export type Distributor = {
@@ -23,6 +24,7 @@ export type Distributor = {
   distributorName: string;
   latitude: number;
   longitude: number;
+  infected: boolean;
 };
 
 export type Seller = {
@@ -30,6 +32,7 @@ export type Seller = {
   sellerShopName: string;
   latitude: number;
   longitude: number;
+  infected: boolean;
 };
 
 export type HealthWorker = {
