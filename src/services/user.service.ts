@@ -30,8 +30,8 @@ export const transferBatch = async (
   try {
     if (type == "distributor") {
       const distributorDoc = (
-        await distributorCollection.doc(uid).get()
-      ).data();
+        await distributorCollection.where("firebaseAuthUid", "==", uid).get()
+      ).docs[0].data();
       if (!distributorDoc) {
         throw new Error("Distributor not found");
       }
@@ -48,7 +48,9 @@ export const transferBatch = async (
         return false;
       }
     } else if (type == "seller") {
-      const sellerDoc = (await sellerCollection.doc(uid).get()).data();
+      const sellerDoc = (
+        await sellerCollection.where("firebaseAuthUid", "==", uid).get()
+      ).docs[0].data();
       if (!sellerDoc) {
         throw new Error("Seller not found");
       }
