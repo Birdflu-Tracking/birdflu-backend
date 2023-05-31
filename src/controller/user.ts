@@ -100,16 +100,17 @@ userRouter.post("/create/batch", async (req: Request, res: Response) => {
 userRouter.post("/transfer/batch", async (req: Request, res: Response) => {
   try {
     const { batchId, nfcCode, type } = req.body;
+    console.log(batchId, nfcCode);
     const batchData = (await batchCollection.doc(batchId).get()).data();
     const nfcDoc = (
       await nfcTagCollection.where("nfcCode", "==", nfcCode).get()
     ).docs[0].data();
-
+    console.log(nfcDoc);
     if (!batchData.distributorId || !batchData.sellerId) {
       await isBatchOwnedbyUser(batchData, req.session.userData.userId);
       const transferredBatch = await transferBatch(
         nfcDoc.type,
-        nfcCode.uid,
+        nfcDoc.uid,
         batchId
       );
       !transferredBatch
