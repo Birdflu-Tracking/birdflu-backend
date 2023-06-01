@@ -14,6 +14,7 @@ import {
   transferBatch,
 } from "../services/user.service";
 import { user } from "firebase-functions/v1/auth";
+import axios from "axios";
 
 export const userRouter = Router();
 
@@ -101,7 +102,7 @@ userRouter.post("/transfer/batch", async (req: Request, res: Response) => {
     const nfcDoc = (
       await nfcTagCollection.where("nfcCode", "==", nfcCode).get()
     ).docs[0].data();
-
+    console.log(nfcDoc);
     if (!batchData.distributorId || !batchData.sellerId) {
       await isBatchOwnedbyUser(batchData, req.session.userData.userDocId);
       const transferredBatch = await transferBatch(
@@ -152,26 +153,34 @@ userRouter.post("/farmer/report", async (req: Request, res: Response) => {
     ).data();
     if (!report) {
       throw new Error("Request not found, invalid request id.");
-    } else if (req.body.chickenSymptoms.length != 4) {
+    } else
+     if (req.body.chickenSymptoms.length != 4) {
       throw new Error("4 chicken symptoms were not provided.");
     } else if (report.submitted == true) {
       throw new Error("Report already submitted.");
     }
-
-    const createdReport = await createSymptomReport(
-      req.body.predictionResults,
-      req.body.chickenSymptoms,
-      req.body.requestId
-    );
-    !createdReport
-      ? res.status(500).json({
-          message: "Error while sending report",
-          error: "Internal server error",
-          success: false,
-        })
-      : res
-          .status(200)
-          .json({ message: "Created report successfully", success: true });
+    let results = 0;
+    await req.body.chickenSymptoms.map(async (d) => {
+      let res = await axios.post("http://localhost:5000", { symptoms: d });
+      if (res.data.prediction == "avian_influenza") {
+        results++;
+      }
+    });
+    console.log(results)
+    // const createdReport = await createSymptomReport(
+    //   req.body.predictionResults,
+    //   req.body.chickenSymptoms,
+    //   req.body.requestId
+    // );
+    // !createdReport
+    //   ? res.status(500).json({
+    //       message: "Error while sending report",
+    //       error: "Internal server error",
+    //       success: false,
+    //     })
+    //   : res
+    //       .status(200)
+    //       .json({ message: "Created report successfully", success: true });
   } catch (error) {
     console.log(error);
     res.status(500).json({
