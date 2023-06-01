@@ -13,6 +13,7 @@ import {
   isBatchOwnedbyUser,
   transferBatch,
 } from "../services/user.service";
+import { user } from "firebase-functions/v1/auth";
 
 export const userRouter = Router();
 
@@ -51,16 +52,11 @@ userRouter.post("/create/batch", async (req: Request, res: Response) => {
       throw new Error(`Invalid batch size ${req.body.batchSize}`);
     }
 
-    const farm = (
-      await farmerCollection
-        .where("userId", "==", db.doc(`/Users/${req.session.userData.userId}`))
-        .get()
-    ).docs[0];
     const batch: Batch = {
       batchSize: Number(req.body.batchSize),
       createdAt: new Date(),
-      farmerId: farm.id,
-      currentOwner: db.doc(`Users/${req.session.userData.userId}`),
+      farmerId: req.session.userData.userDocId, //doc id
+      currentOwner: db.doc(`Users/${req.session.userData.userDocId}`),
       infected: false,
       distributorId: null,
       sellerId: null,
@@ -100,17 +96,17 @@ userRouter.post("/create/batch", async (req: Request, res: Response) => {
  */
 userRouter.post("/transfer/batch", async (req: Request, res: Response) => {
   try {
-    const { batchId, nfcCode, type } = req.body;
+    const { batchId, nfcCode } = req.body;
     const batchData = (await batchCollection.doc(batchId).get()).data();
     const nfcDoc = (
       await nfcTagCollection.where("nfcCode", "==", nfcCode).get()
     ).docs[0].data();
 
     if (!batchData.distributorId || !batchData.sellerId) {
-      await isBatchOwnedbyUser(batchData, req.session.userData.userId);
+      await isBatchOwnedbyUser(batchData, req.session.userData.userDocId);
       const transferredBatch = await transferBatch(
         nfcDoc.type,
-        nfcCode.uid,
+        nfcDoc.userId, // docId
         batchId
       );
       !transferredBatch
@@ -190,22 +186,16 @@ userRouter.post("/farmer/report", async (req: Request, res: Response) => {
 userRouter.get("/batches", async (req: Request, res: Response) => {
   try {
     const batchesData: Array<object> = [];
-    const currentUser = (
-      await userCollection
-        .where("firebaseAuthUid", "==", req.session.userData.firebaseAuthUid)
-        .get()
-    ).docs[0];
+    console.log(`USER_ID: ${req.session.userData.firebaseAuthUid}`);
     if (req.session.userData.userType == "farmer") {
-      const farm = await (
-        await farmerCollection
-          .where("userId", "==", db.doc(`Users/${currentUser.id}`))
-          .get()
-      ).docs[0];
-
       (
         await batchCollection
-          .where("farmerId", "==", farm.id)
-          .where("currentOwner", "==", db.doc(`/Users/${currentUser.id}`))
+          .where("farmerId", "==", req.session.userData.userDocId)
+          .where(
+            "currentOwner",
+            "==",
+            db.doc(`/Users/${req.session.userData.userDocId}`)
+          )
           .get()
       ).docs.forEach((doc) => {
         batchesData.push({ ...doc.data(), batchId: doc.id });
@@ -213,8 +203,12 @@ userRouter.get("/batches", async (req: Request, res: Response) => {
     } else if (req.session.userData.userType == "seller") {
       (
         await batchCollection
-          .where("sellerId", "==", req.session.userData.firebaseAuthUid)
-          .where("currentOwner", "==", db.doc(`/Users/${currentUser.id}`))
+          .where("sellerId", "==", req.session.userData.userDocId)
+          .where(
+            "currentOwner",
+            "==",
+            db.doc(`/Users/${req.session.userData.userDocId}`)
+          )
           .get()
       ).docs.forEach((doc) => {
         batchesData.push({ ...doc.data(), batchId: doc.id });
@@ -222,8 +216,12 @@ userRouter.get("/batches", async (req: Request, res: Response) => {
     } else if (req.session.userData.userType == "distributor") {
       (
         await batchCollection
-          .where("distributorId", "==", req.session.userData.firebaseAuthUid)
-          .where("currentOwner", "==", db.doc(`/Users/${currentUser.id}`))
+          .where("distributorId", "==", req.session.userData.userDocId)
+          .where(
+            "currentOwner",
+            "==",
+            db.doc(`/Users/${req.session.userData.userDocId}`)
+          )
           .get()
       ).docs.forEach((doc) => {
         batchesData.push({ ...doc.data(), batchId: doc.id });
@@ -246,7 +244,7 @@ userRouter.get("/sold-batches", async (req: Request, res: Response) => {
     if (req.session.userData.userType == "farmer") {
       (
         await batchCollection
-          .where("farmerId", "==", req.session.userData.outletId)
+          .where("farmerId", "==", req.session.userData.userDocId)
           .where("distributorId", "!=", "null")
           .get()
       ).docs.forEach((doc) => {
@@ -255,7 +253,7 @@ userRouter.get("/sold-batches", async (req: Request, res: Response) => {
     } else if (req.session.userData.userType == "distributor") {
       (
         await batchCollection
-          .where("distributorId", "==", req.session.userData.outletId)
+          .where("distributorId", "==", req.session.userData.userDocId)
           .where("sellerId", "!=", "null")
           .get()
       ).docs.forEach((doc) => {
@@ -283,7 +281,7 @@ userRouter.get("/current/requests", async (req: Request, res: Response) => {
     const reports: Array<object> = [];
     (
       await farmReportsCollection
-        .where("farmId", "==", req.session.userData.outletId)
+        .where("farmId", "==", req.session.userData.firebaseAuthUid)
         .where("submitted", "==", false)
         .get()
     ).docs.forEach((doc) => {
@@ -295,6 +293,34 @@ userRouter.get("/current/requests", async (req: Request, res: Response) => {
     console.log(error);
     res.status(500).json({
       message: "Error while getting current requests",
+      error: error.message,
+      success: false,
+    });
+  }
+});
+
+userRouter.post("/create/nfc", async (req: Request, res: Response) => {
+  try {
+    const nfcTag: NFCTags = {
+      nfcCode: req.body.nfcCode,
+      type: req.body.type,
+      userDocId: req.session.userData.userDocId,
+    };
+    const createdTag = await nfcTagCollection.add(nfcTag);
+
+    if (createdTag) {
+      res
+        .status(200)
+        .json({ message: "Successfully created tag", success: true });
+    } else {
+      res
+        .status(500)
+        .json({ message: "Error while creating tag", success: false });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Error while creating NFC tag",
       error: error.message,
       success: false,
     });

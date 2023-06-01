@@ -32,3 +32,5 @@ export const userReportsCollection = db.collection(
   USER_REPORTS_COLLECTION_NAME
 );
 export const nfcTagCollection = db.collection(NFC_TAGS_COLLECTION_NAME);
+
+export { admin };

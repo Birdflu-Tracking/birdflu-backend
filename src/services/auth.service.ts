@@ -19,7 +19,7 @@ export const checkUserAlreadyExist = async (user: User) => {
 
 export const getUser = async (firebaseAuthUid: string) => {
   const res = await userCollection
-    .where("firebaseAuthUid", "==", firebaseAuthUid)
+    .where("userId", "==", firebaseAuthUid)
     .get();
 
   if (res.empty == true) {
@@ -31,7 +31,7 @@ export const getUser = async (firebaseAuthUid: string) => {
 
 export const getHealthWorker = async (firebaseAuthUid: string) => {
   const res = await healthWorkerCollection
-    .where("firebaseAuthUid", "==", firebaseAuthUid)
+    .where("userId", "==", firebaseAuthUid)
     .get();
 
   if (res.empty == true) {

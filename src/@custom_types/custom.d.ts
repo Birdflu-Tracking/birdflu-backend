@@ -2,8 +2,8 @@ import "express-session";
 import { UserType } from "../lib/commons";
 
 type BirdFluTrackerUserSession = {
-  userId: string;
-  outletId: string;
+  userDocId: string;
+  sessionCookie: string;
   firebaseAuthUid: string;
   userType: UserType;
   loggedIn: boolean;

@@ -26,7 +26,7 @@ healthWorkerRouter.post(
       const farmReport: FarmReports = {
         chickenSymptoms: null,
         farmId: req.body.farmId,
-        HealthWorkerId: req.session.userData.userId,
+        HealthWorkerDocId: req.session.userData.userDocId,
         initiatedAt: Timestamp.now(),
         submittedAt: null,
         predictionResult: null,

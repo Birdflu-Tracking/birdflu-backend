@@ -1,5 +1,5 @@
 import { Request, Response, Router } from "express";
-import { Distributor, Farmer, Seller, User } from "../models";
+import { User } from "../models";
 import {
   checkUserAlreadyExist,
   createUser,
@@ -50,51 +50,29 @@ authRouter.post("/create/farmer", async (req: Request, res: Response) => {
     } = validateFarmerData(req.body);
 
     const user: User = {
+      userId: req.session.userData.firebaseAuthUid,
       firstName: firstName,
       lastName: lastName,
       email: email,
       phoneNumber: Number(phoneNumber),
       outletAddress: outletAddress,
       type: "farmer",
-      firebaseAuthUid: req.session.userData.firebaseAuthUid,
+      outletName,
+      latitude: Number(latitude),
+      longitude: Number(longitude),
+      infected: false,
     };
 
     await checkUserAlreadyExist(user);
     const createdUser: string = await createUser(user);
     if (createdUser) {
-      try {
-        const farmer: Farmer = {
-          farmName: outletName,
-          userId: db.doc("Users/" + createdUser),
-          latitude: Number(latitude),
-          longitude: Number(longitude),
-          infected: false
-      };
-
-        const addedFarmer = await farmerCollection.add(farmer);
-        !addedFarmer
-          ? res.status(500).json({
-              message: "Farmer creation failed",
-              success: false,
-              resCode: ResponseCodes.CREATION_FAILED,
-            })
-          : res.status(200).json({
-              message: "Created Farmer",
-              userId: createdUser,
-              farmId: addedFarmer.id,
-              success: true,
-              resCode: ResponseCodes.CREATED,
-            });
-      } catch (error) {
-        await db.doc(`Users/${createdUser}`).delete();
-        throw new Error(error);
-      }
-    } else {
-      res.status(500).json({
-        message: "User creation failed",
+      res.status(200).json({
+        message: "Created user successfully",
+        userId: createdUser,
         success: false,
-        resCode: ResponseCodes.CREATION_FAILED,
       });
+    } else {
+      res.status(500).json({ message: "User creation failed", success: false });
     }
   } catch (error: any) {
     console.log(error);
@@ -127,42 +105,25 @@ authRouter.post("/create/distributor", async (req: Request, res: Response) => {
     const data = validateDistributorData(req.body);
 
     const user: User = {
+      userId: req.session.userData.firebaseAuthUid,
       firstName: data.firstName,
       lastName: data.lastName,
       email: data.email,
       phoneNumber: Number(data.phoneNumber),
       outletAddress: data.outletAddress,
       type: "distributor",
-      firebaseAuthUid: req.session.userData.firebaseAuthUid,
+      outletName: data.outletName,
+      latitude: Number(data.latitude),
+      longitude: Number(data.longitude),
+      infected: false,
     };
 
     await checkUserAlreadyExist(user);
     const createdUser: string = await createUser(user);
     if (createdUser) {
-      try {
-        const distributor: Distributor = {
-          distributorName: data.outletName,
-          userId: db.doc("users/" + createdUser),
-          latitude: Number(data.latitude),
-          longitude: Number(data.longitude),
-          infected: false
-        };
-
-        const addedDistributor = await distributorCollection.add(distributor);
-        !addedDistributor
-          ? res
-              .status(500)
-              .json({ message: "Distributor creation failed", success: false })
-          : res.status(200).json({
-              message: "Created distributor",
-              userId: createdUser,
-              distributorId: addedDistributor.id,
-              success: true,
-            });
-      } catch (error) {
-        await db.doc(`Users/${createdUser}`).delete();
-        throw new Error(error);
-      }
+      res
+        .status(200)
+        .json({ message: "Created user successfully", success: true });
     } else {
       res.status(500).json({ message: "User creation failed", success: false });
     }
@@ -196,42 +157,25 @@ authRouter.post("/create/seller", async (req: Request, res: Response) => {
     const data = validateSellerData(req.body);
 
     const user: User = {
+      userId: req.session.userData.firebaseAuthUid,
       firstName: data.firstName,
       lastName: data.lastName,
       email: data.email,
       phoneNumber: Number(data.phoneNumber),
       outletAddress: data.outletAddress,
       type: "seller",
-      firebaseAuthUid: req.session.userData.firebaseAuthUid,
+      outletName: data.outletName,
+      latitude: Number(data.latitude),
+      longitude: Number(data.longitude),
+      infected: false,
     };
 
     await checkUserAlreadyExist(user);
     const createdUser: string = await createUser(user);
     if (createdUser) {
-      try {
-        const seller: Seller = {
-          sellerShopName: data.outletName,
-          userId: db.doc("users/" + createdUser),
-          latitude: Number(data.latitude),
-          longitude: Number(data.longitude),
-          infected: false
-        };
-
-        const addedSeller = await sellerCollection.add(seller);
-        !addedSeller
-          ? res
-              .status(500)
-              .json({ message: "Seller creation failed", success: false })
-          : res.status(200).json({
-              message: "Created Seller",
-              userId: createdUser,
-              sellerId: addedSeller.id,
-              success: true,
-            });
-      } catch (error) {
-        await db.doc(`Users/${createdUser}`).delete();
-        throw new Error(error);
-      }
+      res
+        .status(200)
+        .json({ message: "Created user successfully", success: true });
     } else {
       res.status(500).json({ message: "User creation failed", success: false });
     }
@@ -255,37 +199,22 @@ authRouter.post("/login", async (req: Request, res: Response) => {
       req.session.userData = {
         ...req.session.userData,
         loggedIn: true,
-        userId: user.id,
+        userDocId: user.id,
         userType: user.data().type,
-        outletId: (
-          await farmerCollection
-            .where("userId", "==", db.doc(`Users/${user.id}`))
-            .get()
-        ).docs[0].id,
       };
     } else if (user.data().type == "distributor") {
       req.session.userData = {
         ...req.session.userData,
         loggedIn: true,
-        userId: user.id,
+        userDocId: user.id,
         userType: user.data().type,
-        outletId: (
-          await distributorCollection
-            .where("userId", "==", db.doc(`Users/${user.id}`))
-            .get()
-        ).docs[0].id,
       };
     } else if (user.data().type == "seller") {
       req.session.userData = {
         ...req.session.userData,
         loggedIn: true,
-        userId: user.id,
+        userDocId: user.id,
         userType: user.data().type,
-        outletId: (
-          await sellerCollection
-            .where("userId", "==", db.doc(`Users/${user.id}`))
-            .get()
-        ).docs[0].id,
       };
     }
     return res.status(200).json({ user: user.data(), success: true });
@@ -307,7 +236,7 @@ authRouter.post("/login/health-worker", async (req: Request, res: Response) => {
     req.session.userData = {
       ...req.session.userData,
       loggedIn: true,
-      userId: user.id,
+      userDocId: user.id,
       userType: "health-worker",
     };
 

@@ -1,3 +1,4 @@
+import { USER_COLLECTION_NAME } from "../lib/commons";
 import {
   batchCollection,
   db,
@@ -28,19 +29,11 @@ export const transferBatch = async (
   batchId: string
 ) => {
   try {
+    const userDocRef = (await db.doc(`${USER_COLLECTION_NAME}/${uid}`).get())
+      .ref;
     if (type == "distributor") {
-      // const distributorDoc = (
-      //   await distributorCollection.where("firebaseAuthUid", "==", uid).get()
-      // ).docs[0].data();
-      // if (!distributorDoc) {
-      //   throw new Error("Distributor not found");
-      // }
-      const userDocRef = (
-        await userCollection.where("firebaseAuthUid", "==", uid).get()
-      ).docs[0].ref;
-
       const transferredBatch = await batchCollection.doc(batchId).update({
-        distributorId: uid,
+        distributorId: uid, // Doc ID
         currentOwner: userDocRef,
       });
 
@@ -50,16 +43,6 @@ export const transferBatch = async (
         return false;
       }
     } else if (type == "seller") {
-      // const sellerDoc = (
-      //   await sellerCollection.where("firebaseAuthUid", "==", uid).get()
-      // ).docs[0].data();
-      // if (!sellerDoc) {
-      //   throw new Error("Seller not found");
-      // }
-      const userDocRef = (
-        await userCollection.where("firebaseAuthUid", "==", uid).get()
-      ).docs[0].ref;
-
       const transferredBatch = await batchCollection.doc(batchId).update({
         sellerId: uid,
         currentOwner: userDocRef,

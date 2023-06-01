@@ -2,34 +2,14 @@ import { Symptoms, UserType } from "./lib/commons";
 import { DocumentReference, Timestamp, v1 } from "@google-cloud/firestore";
 
 export type User = {
+  userId: string;
   firstName: string;
   lastName: string;
   email: string;
   phoneNumber: number;
   outletAddress: string;
-  firebaseAuthUid: string;
   type: UserType;
-};
-
-export type Farmer = {
-  userId: DocumentReference;
-  farmName: string;
-  latitude: number;
-  longitude: number;
-  infected: boolean;
-};
-
-export type Distributor = {
-  userId: DocumentReference;
-  distributorName: string;
-  latitude: number;
-  longitude: number;
-  infected: boolean;
-};
-
-export type Seller = {
-  userId: DocumentReference;
-  sellerShopName: string;
+  outletName: string;
   latitude: number;
   longitude: number;
   infected: boolean;
@@ -66,7 +46,7 @@ export type UserReports = {
 
 export type FarmReports = {
   farmId: string;
-  HealthWorkerId: string;
+  HealthWorkerDocId: string;
   initiatedAt: Timestamp;
   submittedAt: Timestamp;
   submitted: boolean;
@@ -75,7 +55,7 @@ export type FarmReports = {
 };
 
 export type NFCTags = {
-  uid: string;
+  userDocId : string;
   nfcCode: string;
   type: "seller" | "distributor";
 };
