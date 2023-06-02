@@ -229,6 +229,12 @@ healthWorkerRouter.get(
         sellerReports.push({ reportId: doc.id, reportData: doc.data() })
       );
       const sellerData = await db.doc(`Users/${sellerDocId}`).get();
+      if (!sellerData.data()) {
+        console.log("SELLECT_NOT_FOUND")
+        return res
+          .status(404)
+          .json({ success: false, message: "Seller not found" });
+      }
 
       const rootFarms: Array<Object> = await batchCollection
         .where("sellerId", "==", sellerData.id)

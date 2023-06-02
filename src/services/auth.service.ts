@@ -18,6 +18,7 @@ export const checkUserAlreadyExist = async (user: User) => {
 };
 
 export const getUser = async (firebaseAuthUid: string) => {
+  console.log(firebaseAuthUid)
   const res = await userCollection
     .where("userId", "==", firebaseAuthUid)
     .get();
