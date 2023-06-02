@@ -20,7 +20,7 @@ export type HealthWorker = {
   lastName: string;
   email: string;
   phoneNumber: number;
-  firebaseAuthUid: string;
+  userId: string;
   assignedAt: Date;
 };
 
@@ -36,11 +36,11 @@ export type Batch = {
 
 export type UserReports = {
   reporterName: string;
-  // sellerId: string;
   createdAt: Timestamp;
   address: string;
   phoneNumber: number;
-  poultryShop: string;
+  poultryShopName: string;
+  poultryShopDocId: string;
   symptomStartDate: Date;
 };
 
@@ -55,7 +55,7 @@ export type FarmReports = {
 };
 
 export type NFCTags = {
-  userDocId : string;
+  userDocId: string;
   nfcCode: string;
   type: "seller" | "distributor";
 };

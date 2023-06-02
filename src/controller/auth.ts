@@ -1,5 +1,5 @@
 import { Request, Response, Router } from "express";
-import { User } from "../models";
+import { HealthWorker, User } from "../models";
 import {
   checkUserAlreadyExist,
   createUser,
@@ -10,6 +10,7 @@ import {
   db,
   distributorCollection,
   farmerCollection,
+  healthWorkerCollection,
   sellerCollection,
   userCollection,
 } from "../services/initDb";
@@ -189,6 +190,56 @@ authRouter.post("/create/seller", async (req: Request, res: Response) => {
     });
   }
 });
+
+/**
+ * This will be used to create a health worker
+ *
+ * {
+ *  email: string,
+ * firstName: string,
+ * lastName: string,
+ * phoneNumber: string,
+ * }
+ **/
+authRouter.post(
+  "/create/health-worker",
+  async (req: Request, res: Response) => {
+    try {
+      const healthWorker: HealthWorker = {
+        assignedAt: new Date(),
+        email: req.body.email,
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        phoneNumber: req.body.lastName,
+        userId: req.session.userData.firebaseAuthUid,
+      };
+
+      const createdHealthWorker = await healthWorkerCollection.add(
+        healthWorker
+      );
+      if (createdHealthWorker.id) {
+        res
+          .status(200)
+          .json({
+            message: "Created health worker successfully",
+            success: true,
+          });
+      } else {
+        res
+          .status(500)
+          .json({ message: "Health worker creation failed", success: false });
+      }
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({
+        message: "Error while creating seller",
+        receivedData: req.body,
+        error: error.message,
+        success: false,
+      });
+    }
+  }
+);
 
 // This route will be used to login the user and create a session.
 authRouter.post("/login", async (req: Request, res: Response) => {

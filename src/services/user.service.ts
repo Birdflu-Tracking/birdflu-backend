@@ -22,8 +22,6 @@ export const isBatchOwnedbyUser = async (batchData: any, userId: string) => {
 };
 
 export const transferBatch = async (
-  // distributorId: string | null,
-  // sellerId: string | null,
   type: "seller" | "distributor",
   uid: string,
   batchId: string

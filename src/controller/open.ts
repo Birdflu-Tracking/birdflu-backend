@@ -15,17 +15,21 @@ export const openRouter = Router();
  *  phoneNumber: number,
  *  poultryShop: string,
  *  symptomStartDate: Date,
- *  address: string
+ *  address: string,
+ *  poultryShopName: string,
+ *  poultryShopDocId: string
  * }
  */
 openRouter.post("/submit-flu-report", async (req: Request, res: Response) => {
   try {
+    console.log(req.body.poultryShopName);
     const userReport: UserReports = {
       reporterName: req.body.reporterName,
       phoneNumber: Number(req.body.phoneNumber),
       address: req.body.address,
       createdAt: Timestamp.now(),
-      poultryShop: req.body.poultryShop,
+      poultryShopName: req.body.poultryShopName,
+      poultryShopDocId: req.body.poultryShopDocId,
       symptomStartDate: new Date(req.body.symptomStartDate),
     };
 
