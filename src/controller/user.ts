@@ -3,7 +3,6 @@ import {
   batchCollection,
   db,
   farmReportsCollection,
-  farmerCollection,
   nfcTagCollection,
   userCollection,
 } from "../services/initDb";
@@ -153,20 +152,19 @@ userRouter.post("/farmer/report", async (req: Request, res: Response) => {
     ).data();
     if (!report) {
       throw new Error("Request not found, invalid request id.");
-    } else
-     if (req.body.chickenSymptoms.length != 4) {
+    } else if (req.body.chickenSymptoms.length != 4) {
       throw new Error("4 chicken symptoms were not provided.");
     } else if (report.submitted == true) {
       throw new Error("Report already submitted.");
     }
     let results = 0;
-    await req.body.chickenSymptoms.map(async (d) => {
+    await req.body.chickenSymptoms.map(async (d: any) => {
       let res = await axios.post("http://localhost:5000", { symptoms: d });
       if (res.data.prediction == "avian_influenza") {
         results++;
       }
     });
-    console.log(results)
+    console.log(results);
     // const createdReport = await createSymptomReport(
     //   req.body.predictionResults,
     //   req.body.chickenSymptoms,
@@ -287,10 +285,11 @@ userRouter.get("/current/requests", async (req: Request, res: Response) => {
         .status(401)
         .json({ message: "Only a farmer can make this request" });
     }
+    console.log("farmId", "==", req.session.userData.firebaseAuthUid)
     const reports: Array<object> = [];
     (
       await farmReportsCollection
-        .where("farmId", "==", req.session.userData.firebaseAuthUid)
+        .where("farmId", "==", req.session.userData.userDocId)
         .where("submitted", "==", false)
         .get()
     ).docs.forEach((doc) => {
