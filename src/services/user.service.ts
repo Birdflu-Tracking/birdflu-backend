@@ -2,10 +2,7 @@ import { USER_COLLECTION_NAME } from "../lib/commons";
 import {
   batchCollection,
   db,
-  distributorCollection,
   farmReportsCollection,
-  farmerCollection,
-  sellerCollection,
   userCollection,
 } from "./initDb";
 import { Timestamp } from "@google-cloud/firestore";

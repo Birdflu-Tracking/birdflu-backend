@@ -1,11 +1,10 @@
 import { Request, Response, Router } from "express";
-import { FarmReports } from "../models";
+import { FarmReports, User } from "../models";
 import { Timestamp } from "@google-cloud/firestore";
 import {
   batchCollection,
   db,
   farmReportsCollection,
-  sellerCollection,
   userReportsCollection,
 } from "../services/initDb";
 import { getCounts } from "../lib/utils";
@@ -36,12 +35,12 @@ healthWorkerRouter.post(
       const createdRequest = await farmReportsCollection.add(farmReport);
       !createdRequest.id
         ? res
-          .status(500)
-          .json({ message: "Error while creating request", success: false })
+            .status(500)
+            .json({ message: "Error while creating request", success: false })
         : res.status(200).json({
-          message: "Send request successfully to " + req.body.farmId,
-          success: true,
-        });
+            message: "Send request successfully to " + req.body.farmId,
+            success: true,
+          });
     } catch (error) {
       console.log(error);
       res.status(500).json({
@@ -69,15 +68,13 @@ healthWorkerRouter.post(
       });
 
       !updatedBatch.isEqual
-        ? res
-          .status(500)
-          .json({
+        ? res.status(500).json({
             message: "Error while marking batch infected, try again",
             success: false,
           })
         : res
-          .status(200)
-          .json({ message: "Marked batch as infected", success: true });
+            .status(200)
+            .json({ message: "Marked batch as infected", success: true });
     } catch (error) {
       console.log(error);
       res.status(500).json({
@@ -157,25 +154,51 @@ healthWorkerRouter.get("reports/users", async (req: Request, res: Response) => {
  * This route will be used by health worker
  * to get the reported seller to list
  * on reports page.
-*/
+ */
 healthWorkerRouter.get(
   "/reported-sellers",
   async (req: Request, res: Response) => {
     try {
       const reportedSellerIds: Array<string> = [];
-      const result: Array<Object> = [];
-      (await userReportsCollection.get()).forEach((doc: any) => reportedSellerIds.push(doc.data().poultryShop));
+      const results: Array<{
+        sellerName: string;
+        rootFarmId: string;
+        rootFarmName: string;
+        count: Number;
+        sellerId: string;
+      }> = [];
+      (await userReportsCollection.get()).forEach((doc: any) =>
+        reportedSellerIds.push(doc.data().poultryShopDocId)
+      );
 
-      await Promise.all(reportedSellerIds.map(async (sellerId) => {
-        var seller = (await db.doc(sellerId).get());
-        var batches = await batchCollection.where("sellerId", "==", sellerId.split("/")[1]).get();
-        await Promise.all(batches.docs.map(async (batch) => {
-          var farm = (await db.doc(`Farms/${batch.data().farmerId}`).get()).data();
-          result.push({ sellerName: seller.data().sellerShopName, rootFarm: farm.farmName, count: getCounts(reportedSellerIds, sellerId), sellerId: seller.id })
-        }))
-      }));
+      await Promise.all(
+        reportedSellerIds.map(async (sellerId) => {
+          var seller = await db.doc(`Users/${sellerId}`).get();
+          var batches = await batchCollection
+            .where("sellerId", "==", sellerId)
+            .get();
 
-      res.status(200).json({ reportedSellers: result, success: true })
+          await Promise.all(
+            batches.docs.map(async (batch) => {
+              var farm = await db.doc(`Users/${batch.data().farmerId}`).get();
+              if (
+                results.filter((result) => result.rootFarmId == farm.id)
+                  .length == 0
+              ) {
+                results.push({
+                  sellerName: seller.data().outletName,
+                  rootFarmId: farm.id,
+                  rootFarmName: farm.data().outletName,
+                  count: getCounts(reportedSellerIds, sellerId),
+                  sellerId: seller.id,
+                });
+              }
+            })
+          );
+        })
+      );
+
+      res.status(200).json({ reportedSellers: results, success: true });
     } catch (error) {
       console.log(error);
       res.status(500).json({
@@ -192,16 +215,53 @@ healthWorkerRouter.get(
  * a single poultry shop.
  */
 healthWorkerRouter.get(
-  "/reports/seller/:sellerId",
+  "/reports/seller/:sellerDocId",
   async (req: Request, res: Response) => {
     try {
       // Seller name, owner name, phone number, root farm, and all reports of that seller
-      let sellerId = req.params.sellerId;
-      const sellerReports: Array<string> = [];
-      (await userReportsCollection.where("poultryShop", "==", `Sellers/${sellerId}`).get()).forEach((doc: any) => sellerReports.push(doc.data()));
-      const sellerData = (await db.doc(`Sellers/${sellerId}`).get()).data()
+      let sellerDocId = req.params.sellerDocId;
+      const sellerReports: Array<Object> = [];
+      (
+        await userReportsCollection
+          .where("poultryShopDocId", "==", sellerDocId)
+          .get()
+      ).forEach((doc: any) =>
+        sellerReports.push({ reportId: doc.id, reportData: doc.data() })
+      );
+      const sellerData = await db.doc(`Users/${sellerDocId}`).get();
 
-      res.status(200).send({ message: { sellerData, sellerReports }, success: true })
+      const rootFarms: Array<Object> = await batchCollection
+        .where("sellerId", "==", sellerData.id)
+        .get()
+        .then(async (batches) => {
+          const farms: Array<{ farmId: string; farmData: Object }> = [];
+
+          await Promise.all(
+            batches.docs.map(async (batch) => {
+              const farm = await db.doc(`Users/${batch.data().farmerId}`).get();
+              if (
+                farms.filter((farm) => farm.farmId == batch.data().farmerId)
+                  .length == 0
+              ) {
+                farms.push({
+                  farmId: batch.data().farmerId,
+                  farmData: farm.data(),
+                });
+              }
+            })
+          );
+
+          return farms;
+        });
+
+      res.status(200).send({
+        message: {
+          sellerData: sellerData.data(),
+          sellerReports,
+          rootFarms,
+        },
+        success: true,
+      });
     } catch (error) {
       console.log(error);
       res.status(500).json({

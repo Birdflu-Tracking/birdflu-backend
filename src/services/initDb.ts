@@ -18,9 +18,9 @@ admin.initializeApp({
 
 export const db = admin.firestore();
 export const userCollection = db.collection(USER_COLLECTION_NAME);
-export const farmerCollection = db.collection(FARM_COLLECTION_NAME);
-export const distributorCollection = db.collection(DISTRIBUTOR_COLLECTION_NAME);
-export const sellerCollection = db.collection(SELLER_COLLECTION_NAME);
+// export const farmerCollection = db.collection(FARM_COLLECTION_NAME);
+// export const distributorCollection = db.collection(DISTRIBUTOR_COLLECTION_NAME);
+// export const sellerCollection = db.collection(SELLER_COLLECTION_NAME);
 export const batchCollection = db.collection(BATCH_COLLECTION_NAME);
 export const healthWorkerCollection = db.collection(
   HEALTH_WORKER_COLLECTION_NAME

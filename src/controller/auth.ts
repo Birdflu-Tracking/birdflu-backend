@@ -8,10 +8,7 @@ import {
 } from "../services/auth.service";
 import {
   db,
-  distributorCollection,
-  farmerCollection,
   healthWorkerCollection,
-  sellerCollection,
   userCollection,
 } from "../services/initDb";
 import {
