@@ -1,5 +1,5 @@
 import { Request, Response, Router } from "express";
-import { HealthWorker, User } from "../models";
+import { HealthWorker, NFCTags, User } from "../models";
 import {
   checkUserAlreadyExist,
   createUser,
@@ -10,6 +10,7 @@ import {
   admin,
   db,
   healthWorkerCollection,
+  nfcTagCollection,
   userCollection,
 } from "../services/initDb";
 import {
@@ -75,7 +76,7 @@ authRouter.post("/create/farmer", async (req: Request, res: Response) => {
         success: false,
       });
     } else {
-      admin.auth().deleteUser(adminUser.uid)
+      admin.auth().deleteUser(adminUser.uid);
       res.status(500).json({ message: "User creation failed", success: false });
     }
   } catch (error: any) {
@@ -132,7 +133,7 @@ authRouter.post("/create/distributor", async (req: Request, res: Response) => {
         .status(200)
         .json({ message: "Created user successfully", success: true });
     } else {
-      admin.auth().deleteUser(adminUser.uid)
+      admin.auth().deleteUser(adminUser.uid);
       res.status(500).json({ message: "User creation failed", success: false });
     }
   } catch (error: any) {
@@ -143,7 +144,6 @@ authRouter.post("/create/distributor", async (req: Request, res: Response) => {
       error: error.message,
       success: false,
       code: error.code,
-
     });
   }
 });
@@ -189,7 +189,7 @@ authRouter.post("/create/seller", async (req: Request, res: Response) => {
         .status(200)
         .json({ message: "Created user successfully", success: true });
     } else {
-      admin.auth().deleteUser(adminUser.uid)
+      admin.auth().deleteUser(adminUser.uid);
 
       res.status(500).json({ message: "User creation failed", success: false });
     }
@@ -201,7 +201,34 @@ authRouter.post("/create/seller", async (req: Request, res: Response) => {
       error: error.message,
       success: false,
       code: error.code,
+    });
+  }
+});
 
+authRouter.post("/create/nfc", async (req: Request, res: Response) => {
+  try {
+    const nfcTag: NFCTags = {
+      nfcCode: req.body.nfcCode,
+      type: req.body.type,
+      userDocId: req.body.userDocId,
+    };
+    const createdTag = await nfcTagCollection.add(nfcTag);
+
+    if (createdTag) {
+      res
+        .status(200)
+        .json({ message: "Successfully created tag", success: true });
+    } else {
+      res
+        .status(500)
+        .json({ message: "Error while creating tag", success: false });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Error while creating NFC tag",
+      error: error.message,
+      success: false,
     });
   }
 });

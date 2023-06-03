@@ -234,6 +234,7 @@ userRouter.get("/batches", async (req: Request, res: Response) => {
         batchesData.push({ ...doc.data(), batchId: doc.id });
       });
     }
+
     res.status(200).json({ batches: batchesData, success: true });
   } catch (error) {
     console.log(error);
@@ -249,23 +250,37 @@ userRouter.get("/sold-batches", async (req: Request, res: Response) => {
   try {
     const batchesData: Array<object> = [];
     if (req.session.userData.userType == "farmer") {
-      (
+      const batchDocs = (
         await batchCollection
           .where("farmerId", "==", req.session.userData.userDocId)
           .where("distributorId", "!=", "null")
           .get()
-      ).docs.forEach((doc) => {
-        batchesData.push({ ...doc.data(), batchId: doc.id });
-      });
+      ).docs;
+
+      await Promise.all(
+        batchDocs.map(async (doc) => {
+          const buyer = (
+            await db.doc(`Users/${doc.data().distributorId}`).get()
+          ).data();
+          batchesData.push({ ...doc.data(), buyer, batchId: doc.id });
+        })
+      );
     } else if (req.session.userData.userType == "distributor") {
-      (
+      const batchDocs = (
         await batchCollection
           .where("distributorId", "==", req.session.userData.userDocId)
           .where("sellerId", "!=", "null")
           .get()
-      ).docs.forEach((doc) => {
-        batchesData.push({ ...doc.data(), batchId: doc.id });
-      });
+      ).docs;
+
+      await Promise.all(
+        batchDocs.map(async (doc) => {
+          const buyer = (
+            await db.doc(`Users/${doc.data().sellerId}`).get()
+          ).data();
+          batchesData.push({ ...doc.data(), buyer, batchId: doc.id });
+        })
+      );
     }
     res.status(200).json({ batches: batchesData, success: true });
   } catch (error) {
@@ -278,6 +293,66 @@ userRouter.get("/sold-batches", async (req: Request, res: Response) => {
   }
 });
 
+userRouter.get(
+  "/total-batches-generated-and-sold",
+  async (req: Request, res: Response) => {
+    try {
+      if (req.session.userData.userType == "farmer") {
+        const batchDocs = (
+          await batchCollection
+            .where("farmerId", "==", req.session.userData.userDocId)
+            .get()
+        ).docs;
+
+        var chickenSold = 0;
+        const soldBatches = await batchCollection
+          .where("farmerId", "==", req.session.userData.userDocId)
+          .where("distributorId", "!=", "null")
+          .get();
+
+        await Promise.all(
+          soldBatches.docs.map(
+            (batch) => (chickenSold += batch.data().batchSize)
+          )
+        );
+
+        res.status(200).json({
+          totalBatchesGenerated: batchDocs.length,
+          totalBatchesSold: soldBatches.docs.length,
+          totalChickensSold: chickenSold,
+          success: true,
+        });
+      } else if (req.session.userData.userType == "distributor") {
+        const batchDocs = (
+          await batchCollection
+            .where("distributorId", "==", req.session.userData.userDocId)
+            .get()
+        ).docs;
+
+        const soldBatches = (
+          await batchCollection
+            .where("distributorId", "==", req.session.userData.userDocId)
+            .where("sellerId", "!=", "null")
+            .get()
+        ).docs;
+
+        res.status(200).json({
+          totalBatches: batchDocs.length,
+          totalBatchesSold: soldBatches.length,
+          success: true,
+        });
+      }
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({
+        message: "Error while getting sold batches",
+        error: error.message,
+        success: false,
+      });
+    }
+  }
+);
+
 userRouter.get("/current/requests", async (req: Request, res: Response) => {
   try {
     if (req.session.userData.userType != "farmer") {
@@ -285,7 +360,7 @@ userRouter.get("/current/requests", async (req: Request, res: Response) => {
         .status(401)
         .json({ message: "Only a farmer can make this request" });
     }
-    console.log("farmId", "==", req.session.userData.firebaseAuthUid)
+    console.log("farmId", "==", req.session.userData.firebaseAuthUid);
     const reports: Array<object> = [];
     (
       await farmReportsCollection
@@ -301,34 +376,6 @@ userRouter.get("/current/requests", async (req: Request, res: Response) => {
     console.log(error);
     res.status(500).json({
       message: "Error while getting current requests",
-      error: error.message,
-      success: false,
-    });
-  }
-});
-
-userRouter.post("/create/nfc", async (req: Request, res: Response) => {
-  try {
-    const nfcTag: NFCTags = {
-      nfcCode: req.body.nfcCode,
-      type: req.body.type,
-      userDocId: req.session.userData.userDocId,
-    };
-    const createdTag = await nfcTagCollection.add(nfcTag);
-
-    if (createdTag) {
-      res
-        .status(200)
-        .json({ message: "Successfully created tag", success: true });
-    } else {
-      res
-        .status(500)
-        .json({ message: "Error while creating tag", success: false });
-    }
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      message: "Error while creating NFC tag",
       error: error.message,
       success: false,
     });

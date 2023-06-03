@@ -56,5 +56,5 @@ export type FarmReports = {
 export type NFCTags = {
   userDocId: string;
   nfcCode: string;
-  type: "seller" | "distributor";
+  type: UserType;
 };
