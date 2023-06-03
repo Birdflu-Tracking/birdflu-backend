@@ -3,8 +3,7 @@ import { DocumentReference, Timestamp, v1 } from "@google-cloud/firestore";
 
 export type User = {
   userId: string;
-  firstName: string;
-  lastName: string;
+  fullName:string,
   email: string;
   phoneNumber: number;
   outletAddress: string;

@@ -12,14 +12,14 @@ export const validateFarmerData = (data: any) => {
       );
 
     return {
-      firstName: data.firstName,
-      lastName: data.lastName,
+      fullName: data.fullName,
       email: data.email,
       phoneNumber: data.phoneNumber,
       outletAddress: data.outletAddress,
       outletName: data.outletName,
       latitude: data.latitude,
       longitude: data.longitude,
+      password: data.password,
     };
   }
 };
@@ -38,14 +38,14 @@ export const validateDistributorData = (data: any) => {
       );
 
     return {
-      firstName: data.firstName,
-      lastName: data.lastName,
+      fullName: data.fullName,
       email: data.email,
       phoneNumber: data.phoneNumber,
       outletAddress: data.outletAddress,
       outletName: data.outletName,
       latitude: data.latitude,
       longitude: data.longitude,
+      password: data.password,
     };
   }
 };
@@ -64,14 +64,15 @@ export const validateSellerData = (data: any) => {
       );
 
     return {
-      firstName: data.firstName,
-      lastName: data.lastName,
+      fullName: data.fullName,
+
       email: data.email,
       phoneNumber: data.phoneNumber,
       outletAddress: data.outletAddress,
       outletName: data.outletName,
       latitude: data.latitude,
       longitude: data.longitude,
+      password: data.password,
     };
   }
 };

@@ -39,7 +39,7 @@ app.use(
 );
 
 server.listen(port, async () => {
-  app.use("/api/auth", auth, authRouter);
+  app.use("/api/auth", authRouter);
   app.use("/api/user", verifyUser, userRouter);
   app.use("/api/health-worker", verifyUser, healthWorkerRouter);
   app.use("/open", openRouter);

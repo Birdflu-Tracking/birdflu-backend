@@ -7,6 +7,7 @@ import {
   getUser,
 } from "../services/auth.service";
 import {
+  admin,
   db,
   healthWorkerCollection,
   userCollection,
@@ -18,6 +19,8 @@ import {
 } from "../validations";
 import { ResponseCodes } from "../lib/utils";
 
+//auth middle ware
+import { auth } from "../middleware/auth";
 export const authRouter = Router();
 
 /**
@@ -37,20 +40,24 @@ export const authRouter = Router();
 authRouter.post("/create/farmer", async (req: Request, res: Response) => {
   try {
     const {
-      firstName,
-      lastName,
+      fullName,
       email,
       phoneNumber,
       outletAddress,
       outletName,
       latitude,
       longitude,
+      password,
     } = validateFarmerData(req.body);
 
+    let adminUser = await admin.auth().createUser({
+      displayName: fullName,
+      email: email,
+      password: password,
+    });
     const user: User = {
-      userId: req.session.userData.firebaseAuthUid,
-      firstName: firstName,
-      lastName: lastName,
+      userId: adminUser.uid,
+      fullName: fullName,
       email: email,
       phoneNumber: Number(phoneNumber),
       outletAddress: outletAddress,
@@ -60,8 +67,6 @@ authRouter.post("/create/farmer", async (req: Request, res: Response) => {
       longitude: Number(longitude),
       infected: false,
     };
-
-    await checkUserAlreadyExist(user);
     const createdUser: string = await createUser(user);
     if (createdUser) {
       res.status(200).json({
@@ -70,6 +75,7 @@ authRouter.post("/create/farmer", async (req: Request, res: Response) => {
         success: false,
       });
     } else {
+      admin.auth().deleteUser(adminUser.uid)
       res.status(500).json({ message: "User creation failed", success: false });
     }
   } catch (error: any) {
@@ -79,7 +85,8 @@ authRouter.post("/create/farmer", async (req: Request, res: Response) => {
       receivedData: req.body,
       error: error.message,
       success: false,
-      resCode: ResponseCodes.CREATION_FAILED,
+      code: error.code,
+      // resCode: ResponseCodes.CREATION_FAILED,
     });
   }
 });
@@ -101,11 +108,14 @@ authRouter.post("/create/farmer", async (req: Request, res: Response) => {
 authRouter.post("/create/distributor", async (req: Request, res: Response) => {
   try {
     const data = validateDistributorData(req.body);
-
+    let adminUser = await admin.auth().createUser({
+      displayName: data.fullName,
+      email: data.email,
+      password: data.password,
+    });
     const user: User = {
-      userId: req.session.userData.firebaseAuthUid,
-      firstName: data.firstName,
-      lastName: data.lastName,
+      userId: adminUser.uid,
+      fullName: data.fullName,
       email: data.email,
       phoneNumber: Number(data.phoneNumber),
       outletAddress: data.outletAddress,
@@ -116,13 +126,13 @@ authRouter.post("/create/distributor", async (req: Request, res: Response) => {
       infected: false,
     };
 
-    await checkUserAlreadyExist(user);
     const createdUser: string = await createUser(user);
     if (createdUser) {
       res
         .status(200)
         .json({ message: "Created user successfully", success: true });
     } else {
+      admin.auth().deleteUser(adminUser.uid)
       res.status(500).json({ message: "User creation failed", success: false });
     }
   } catch (error: any) {
@@ -132,6 +142,8 @@ authRouter.post("/create/distributor", async (req: Request, res: Response) => {
       receivedData: req.body,
       error: error.message,
       success: false,
+      code: error.code,
+
     });
   }
 });
@@ -153,11 +165,14 @@ authRouter.post("/create/distributor", async (req: Request, res: Response) => {
 authRouter.post("/create/seller", async (req: Request, res: Response) => {
   try {
     const data = validateSellerData(req.body);
-
+    let adminUser = await admin.auth().createUser({
+      displayName: data.fullName,
+      email: data.email,
+      password: data.password,
+    });
     const user: User = {
-      userId: req.session.userData.firebaseAuthUid,
-      firstName: data.firstName,
-      lastName: data.lastName,
+      userId: adminUser.uid,
+      fullName: data.fullName,
       email: data.email,
       phoneNumber: Number(data.phoneNumber),
       outletAddress: data.outletAddress,
@@ -168,13 +183,14 @@ authRouter.post("/create/seller", async (req: Request, res: Response) => {
       infected: false,
     };
 
-    await checkUserAlreadyExist(user);
     const createdUser: string = await createUser(user);
     if (createdUser) {
       res
         .status(200)
         .json({ message: "Created user successfully", success: true });
     } else {
+      admin.auth().deleteUser(adminUser.uid)
+
       res.status(500).json({ message: "User creation failed", success: false });
     }
   } catch (error: any) {
@@ -184,6 +200,8 @@ authRouter.post("/create/seller", async (req: Request, res: Response) => {
       receivedData: req.body,
       error: error.message,
       success: false,
+      code: error.code,
+
     });
   }
 });
@@ -215,12 +233,10 @@ authRouter.post(
         healthWorker
       );
       if (createdHealthWorker.id) {
-        res
-          .status(200)
-          .json({
-            message: "Created health worker successfully",
-            success: true,
-          });
+        res.status(200).json({
+          message: "Created health worker successfully",
+          success: true,
+        });
       } else {
         res
           .status(500)
@@ -239,7 +255,7 @@ authRouter.post(
 );
 
 // This route will be used to login the user and create a session.
-authRouter.post("/login", async (req: Request, res: Response) => {
+authRouter.post("/login", auth, async (req: Request, res: Response) => {
   try {
     const user = await getUser(req.session.userData.firebaseAuthUid);
     if (user.data().type == "farmer") {
@@ -277,24 +293,28 @@ authRouter.post("/login", async (req: Request, res: Response) => {
 });
 
 // This route is used to log the health worker in.
-authRouter.post("/login/health-worker", async (req: Request, res: Response) => {
-  try {
-    const user = await getHealthWorker(req.session.userData.firebaseAuthUid);
+authRouter.post(
+  "/login/health-worker",
+  auth,
+  async (req: Request, res: Response) => {
+    try {
+      const user = await getHealthWorker(req.session.userData.firebaseAuthUid);
 
-    req.session.userData = {
-      ...req.session.userData,
-      loggedIn: true,
-      userDocId: user.id,
-      userType: "health-worker",
-    };
+      req.session.userData = {
+        ...req.session.userData,
+        loggedIn: true,
+        userDocId: user.id,
+        userType: "health-worker",
+      };
 
-    return res.status(200).json({ user: user.data(), success: true });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      message: "Error while logging in",
-      error: error.message,
-      success: false,
-    });
+      return res.status(200).json({ user: user.data(), success: true });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({
+        message: "Error while logging in",
+        error: error.message,
+        success: false,
+      });
+    }
   }
-});
+);
