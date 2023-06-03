@@ -10,7 +10,7 @@ import {
   USER_COLLECTION_NAME,
   USER_REPORTS_COLLECTION_NAME,
 } from "../lib/commons";
-var serviceAccount = require("../../birdflu-tracker-firebase-adminsdk-3635x-1d9e2bbf9b.json");
+var serviceAccount = require("../../service-account.json");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
