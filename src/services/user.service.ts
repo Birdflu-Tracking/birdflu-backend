@@ -58,14 +58,16 @@ export const transferBatch = async (
 };
 
 export const createSymptomReport = async (
-  predictionResult: boolean,
+  finalResult:boolean,
+  predictionResult: string,
   chickenSymptoms: object,
   requestId: string
 ) => {
   const createdReport = await farmReportsCollection.doc(requestId).update({
     submitted: true,
     submittedAt: Timestamp.now(),
-    predictionResults: predictionResult,
+    avianResult:finalResult,
+    predictionResult: predictionResult,
     chickenSymptoms: { ...chickenSymptoms },
   });
 

@@ -14,6 +14,7 @@ import {
 } from "../services/user.service";
 import { user } from "firebase-functions/v1/auth";
 import axios from "axios";
+import { object } from "firebase-functions/v1/storage";
 
 export const userRouter = Router();
 
@@ -158,27 +159,33 @@ userRouter.post("/farmer/report", async (req: Request, res: Response) => {
       throw new Error("Report already submitted.");
     }
     let results = 0;
-    await req.body.chickenSymptoms.map(async (d: any) => {
-      let res = await axios.post("http://localhost:5000", { symptoms: d });
-      if (res.data.prediction == "avian_influenza") {
-        results++;
-      }
+    let allPromise = req.body.chickenSymptoms.map(async (d: any) => {
+      return (
+        await axios.post("http://localhost:5000/predict", { symptoms: d })
+      ).data.prediction;
     });
-    console.log(results);
-    // const createdReport = await createSymptomReport(
-    //   req.body.predictionResults,
-    //   req.body.chickenSymptoms,
-    //   req.body.requestId
-    // );
-    // !createdReport
-    //   ? res.status(500).json({
-    //       message: "Error while sending report",
-    //       error: "Internal server error",
-    //       success: false,
-    //     })
-    //   : res
-    //       .status(200)
-    //       .json({ message: "Created report successfully", success: true });
+    let result = await Promise.all(allPromise);
+    const count = result.reduce((accumulator, value) => {
+      accumulator[value] = ++accumulator[value] || 1;
+      return accumulator;
+    }, {});
+    const finalResult = Object.keys(count).filter((d) => count[d] >= 3)[0]||"";
+    console.log(finalResult)
+    const createdReport = await createSymptomReport(
+      finalResult == "avian_influenza" ? true : false,
+      finalResult,
+      req.body.chickenSymptoms,
+      req.body.requestId
+    );
+    !createdReport
+      ? res.status(500).json({
+          message: "Error while sending report",
+          error: "Internal server error",
+          success: false,
+        })
+      : res
+          .status(200)
+          .json({ message: "Created report successfully", success: true });
   } catch (error) {
     console.log(error);
     res.status(500).json({
@@ -361,6 +368,7 @@ userRouter.get("/current/requests", async (req: Request, res: Response) => {
         .json({ message: "Only a farmer can make this request" });
     }
     console.log("farmId", "==", req.session.userData.firebaseAuthUid);
+    console.log(req.session.userData.userDocId)
     const reports: Array<object> = [];
     (
       await farmReportsCollection
