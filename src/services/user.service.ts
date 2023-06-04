@@ -79,68 +79,99 @@ export const createSymptomReport = async (
   return true;
 };
 
+const isNotAlreadyMarked = async (userId: string, value: boolean) => {
+  const infected = (
+    await db.doc(`${USER_COLLECTION_NAME}/${userId}`).get()
+  ).data().infected;
+
+  if (infected == value) {
+    return true;
+  }
+  return false;
+};
+
 export const changeInfectedTo = async (
   value: boolean,
   batches: Array<firestore.DocumentData>
 ) => {
   await Promise.all(
     batches.map(async (batch) => {
-      await db
-        .doc(`${USER_COLLECTION_NAME}/${batch.data().farmerId}`)
-        .update({
-          infected: value,
-        })
-        .catch((err) => {
-          console.log(
-            `DOCUMENT ${batch.data().farmerId} NOT FOUND`,
-            err.message
-          );
-        });
+      if (
+        batch.data().farmerId &&
+        isNotAlreadyMarked(batch.data().farmerId, value)
+      ) {
+        await db
+          .doc(`${USER_COLLECTION_NAME}/${batch.data().farmerId}`)
+          .update({
+            infected: value,
+          })
+          .catch((err) => {
+            console.log(
+              `DOCUMENT ${batch.data().farmerId} NOT FOUND`,
+              err.message
+            );
+          });
+      }
 
-      await db
-        .doc(`${USER_COLLECTION_NAME}/${batch.data().distributorId}`)
-        .update({
-          infected: value,
-        })
-        .catch((err) => {
-          console.log(
-            `DOCUMENT ${batch.data().distributorId} NOT FOUND`,
-            err.message
-          );
-        });
+      if (
+        batch.data().distributorId &&
+        isNotAlreadyMarked(batch.data().farmerId, value)
+      ) {
+        await db
+          .doc(`${USER_COLLECTION_NAME}/${batch.data().distributorId}`)
+          .update({
+            infected: value,
+          })
+          .catch((err) => {
+            console.log(
+              `DOCUMENT ${batch.data().distributorId} NOT FOUND`,
+              err.message
+            );
+          });
 
-      // Also mark the sellers whome the distributor sold as infected
-      const batchesAssociatedWithDistributor = (
-        await batchCollection
-          .where("distributorId", "==", batch.data().distributorId)
-          .get()
-      ).docs;
+        // Also mark the sellers whome the distributor sold as infected
+        const batchesAssociatedWithDistributor = (
+          await batchCollection
+            .where("distributorId", "==", batch.data().distributorId)
+            .get()
+        ).docs;
 
-      await Promise.all(
-        batchesAssociatedWithDistributor.map(async (distBatches) => {
-          await db
-            .doc(`${USER_COLLECTION_NAME}/${distBatches.data().sellerId}`)
-            .update({ infected: value })
-            .catch((err) => {
-              console.log(
-                `DOCUMENT ${distBatches.data().sellerId} NOT FOUND`,
-                err.message
-              );
-            });
-        })
-      );
+        await Promise.all(
+          batchesAssociatedWithDistributor.map(async (distBatches) => {
+            if (
+              distBatches.data().sellerId &&
+              isNotAlreadyMarked(distBatches.data().sellerId, value)
+            ) {
+              await db
+                .doc(`${USER_COLLECTION_NAME}/${distBatches.data().sellerId}`)
+                .update({ infected: value })
+                .catch((err) => {
+                  console.log(
+                    `DOCUMENT ${distBatches.data().sellerId} NOT FOUND`,
+                    err.message
+                  );
+                });
+            }
+          })
+        );
+      }
 
-      await db
-        .doc(`${USER_COLLECTION_NAME}/${batch.data().sellerId}`)
-        .update({
-          infected: value,
-        })
-        .catch((err) => {
-          console.log(
-            `DOCUMENT ${batch.data().sellerId} NOT FOUND`,
-            err.message
-          );
-        });
+      if (
+        batch.data().sellerId &&
+        isNotAlreadyMarked(batch.data().sellerId, value)
+      ) {
+        await db
+          .doc(`${USER_COLLECTION_NAME}/${batch.data().sellerId}`)
+          .update({
+            infected: value,
+          })
+          .catch((err) => {
+            console.log(
+              `DOCUMENT ${batch.data().sellerId} NOT FOUND`,
+              err.message
+            );
+          });
+      }
     })
   );
 };
