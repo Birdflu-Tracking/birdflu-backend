@@ -120,7 +120,7 @@ export const changeInfectedTo = async (
         batchesAssociatedWithDistributor.map(async (distBatches) => {
           await db
             .doc(`${USER_COLLECTION_NAME}/${distBatches.data().sellerId}`)
-            .update({ infected: true })
+            .update({ infected: value })
             .catch((err) => {
               console.log(
                 `DOCUMENT ${distBatches.data().sellerId} NOT FOUND`,
