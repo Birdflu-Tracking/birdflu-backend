@@ -85,16 +85,16 @@ export const changeInfectedTo = async (
 ) => {
   await Promise.all(
     batches.map(async (batch) => {
-      console.log("BATCH", batch.data().farmerId);
-      console.log("BATCH", batch.data().distributorId);
-      console.log("BATCH", batch.data().sellerId);
       await db
         .doc(`${USER_COLLECTION_NAME}/${batch.data().farmerId}`)
         .update({
           infected: value,
         })
         .catch((err) => {
-          console.log(`DOCUMENT ${batch.data().farmerId} NOT FOUND`);
+          console.log(
+            `DOCUMENT ${batch.data().farmerId} NOT FOUND`,
+            err.message
+          );
         });
 
       await db
@@ -103,8 +103,32 @@ export const changeInfectedTo = async (
           infected: value,
         })
         .catch((err) => {
-          console.log(`DOCUMENT ${batch.data().distributorId} NOT FOUND`);
+          console.log(
+            `DOCUMENT ${batch.data().distributorId} NOT FOUND`,
+            err.message
+          );
         });
+
+      // Also mark the sellers whome the distributor sold as infected
+      const batchesAssociatedWithDistributor = (
+        await batchCollection
+          .where("distributorId", "==", batch.data().distributorId)
+          .get()
+      ).docs;
+
+      await Promise.all(
+        batchesAssociatedWithDistributor.map(async (distBatches) => {
+          await db
+            .doc(`${USER_COLLECTION_NAME}/${distBatches.data().sellerId}`)
+            .update({ infected: true })
+            .catch((err) => {
+              console.log(
+                `DOCUMENT ${distBatches.data().sellerId} NOT FOUND`,
+                err.message
+              );
+            });
+        })
+      );
 
       await db
         .doc(`${USER_COLLECTION_NAME}/${batch.data().sellerId}`)
@@ -112,7 +136,10 @@ export const changeInfectedTo = async (
           infected: value,
         })
         .catch((err) => {
-          console.log(`DOCUMENT ${batch.data().sellerId} NOT FOUND`);
+          console.log(
+            `DOCUMENT ${batch.data().sellerId} NOT FOUND`,
+            err.message
+          );
         });
     })
   );
