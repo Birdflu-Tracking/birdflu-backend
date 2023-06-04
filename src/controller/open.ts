@@ -1,6 +1,6 @@
 import { Request, Response, Router } from "express";
 import { ResponseCodes } from "../lib/utils";
-import { UserReports } from "../models";
+import { User, UserReports } from "../models";
 import { Timestamp } from "@google-cloud/firestore";
 import { userCollection, userReportsCollection } from "../services/initDb";
 
@@ -80,3 +80,49 @@ openRouter.get("/seller-shops", async (req: Request, res: Response) => {
     });
   }
 });
+
+openRouter.get(
+  "/infected-stakeholders",
+  async (req: Request, res: Response) => {
+    try {
+      const infectedUsers: {
+        farmer: Array<Object>;
+        seller: Array<Object>;
+        distributor: Array<Object>;
+      } = { farmer: [], distributor: [], seller: [] };
+
+      const users = (await userCollection.where("infected", "==", true).get())
+        .docs;
+
+      await Promise.all(
+        users.map((user) => {
+          const data = user.data();
+          // Reflect.deleteProperty(data, "userId")
+          switch (user.data().type) {
+            case "farmer":
+              infectedUsers.farmer.push(data);
+              break;
+            case "distributor":
+              infectedUsers.distributor.push(data);
+              break;
+            case "seller":
+              infectedUsers.seller.push(data);
+              break;
+          }
+        })
+      );
+
+      res
+        .status(200)
+        .json({ message: "Got infected stakeholders", infectedUsers });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({
+        message: "Error while getting seller shops",
+        success: false,
+        resCode: ResponseCodes.INTERNAL_SERVER_ERROR,
+        error: error.message,
+      });
+    }
+  }
+);

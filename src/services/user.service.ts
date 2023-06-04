@@ -6,6 +6,7 @@ import {
   userCollection,
 } from "./initDb";
 import { Timestamp } from "@google-cloud/firestore";
+import { firestore } from "firebase-admin";
 
 export const isBatchOwnedbyUser = async (batchData: any, userId: string) => {
   try {
@@ -58,7 +59,7 @@ export const transferBatch = async (
 };
 
 export const createSymptomReport = async (
-  finalResult:boolean,
+  finalResult: boolean,
   predictionResult: string,
   chickenSymptoms: object,
   requestId: string
@@ -66,7 +67,7 @@ export const createSymptomReport = async (
   const createdReport = await farmReportsCollection.doc(requestId).update({
     submitted: true,
     submittedAt: Timestamp.now(),
-    avianResult:finalResult,
+    avianResult: finalResult,
     predictionResult: predictionResult,
     chickenSymptoms: { ...chickenSymptoms },
   });
@@ -76,4 +77,43 @@ export const createSymptomReport = async (
   }
 
   return true;
+};
+
+export const changeInfectedTo = async (
+  value: boolean,
+  batches: Array<firestore.DocumentData>
+) => {
+  await Promise.all(
+    batches.map(async (batch) => {
+      console.log("BATCH", batch.data().farmerId);
+      console.log("BATCH", batch.data().distributorId);
+      console.log("BATCH", batch.data().sellerId);
+      await db
+        .doc(`${USER_COLLECTION_NAME}/${batch.data().farmerId}`)
+        .update({
+          infected: value,
+        })
+        .catch((err) => {
+          console.log(`DOCUMENT ${batch.data().farmerId} NOT FOUND`);
+        });
+
+      await db
+        .doc(`${USER_COLLECTION_NAME}/${batch.data().distributorId}`)
+        .update({
+          infected: value,
+        })
+        .catch((err) => {
+          console.log(`DOCUMENT ${batch.data().distributorId} NOT FOUND`);
+        });
+
+      await db
+        .doc(`${USER_COLLECTION_NAME}/${batch.data().sellerId}`)
+        .update({
+          infected: value,
+        })
+        .catch((err) => {
+          console.log(`DOCUMENT ${batch.data().sellerId} NOT FOUND`);
+        });
+    })
+  );
 };

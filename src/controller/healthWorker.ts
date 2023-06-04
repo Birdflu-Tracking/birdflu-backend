@@ -8,6 +8,11 @@ import {
   userReportsCollection,
 } from "../services/initDb";
 import { getCounts } from "../lib/utils";
+import {
+  FARM_REPORTS_COLLECTION_NAME,
+  USER_COLLECTION_NAME,
+} from "../lib/commons";
+import { changeInfectedTo } from "../services/user.service";
 
 export const healthWorkerRouter = Router();
 
@@ -22,6 +27,17 @@ healthWorkerRouter.post(
   "/send/symptom/request",
   async (req: Request, res: Response) => {
     try {
+      const farm = (
+        await db.doc(`${USER_COLLECTION_NAME}/${req.body.farmId}`).get()
+      ).data();
+
+      if (farm.type != "farmer") {
+        return res.status(500).json({
+          message: "Invalid farmId, user not a farmer",
+          success: false,
+        });
+      }
+
       const farmReport: FarmReports = {
         chickenSymptoms: null,
         farmId: req.body.farmId,
@@ -75,6 +91,106 @@ healthWorkerRouter.post(
         : res
             .status(200)
             .json({ message: "Marked batch as infected", success: true });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({
+        message: "Error while marking chain infected",
+        error: error.message,
+        success: false,
+      });
+    }
+  }
+);
+
+/**
+ * The request body should contain following parameters
+ * {
+ *  requestId: string
+ * }
+ */
+healthWorkerRouter.post(
+  "/mark/infected",
+  async (req: Request, res: Response) => {
+    const request = (
+      await db
+        .doc(`${FARM_REPORTS_COLLECTION_NAME}/${req.body.requestId}`)
+        .get()
+    ).data();
+
+    if (!request) {
+      return res.status(404).json({
+        message: "Invalid requestId, request not found.",
+        success: false,
+      });
+    }
+
+    if (request.avianResult != true) {
+      return res.status(404).json({
+        message: "Avian results false, can't mark infected",
+        success: false,
+      });
+    }
+
+    // All stakeholders associated with farmer
+    const batchesAssociatedWithFarm = (
+      await batchCollection.where("farmerId", "==", request.farmId).get()
+    ).docs;
+
+    await changeInfectedTo(true, batchesAssociatedWithFarm);
+
+    res
+      .status(200)
+      .json({ message: "Marked stakeholders infected", success: true });
+    try {
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({
+        message: "Error while marking chain infected",
+        error: error.message,
+        success: false,
+      });
+    }
+  }
+);
+
+/**
+ * The request body should contain following parameters
+ * {
+ *  requestId: string
+ * }
+ */
+healthWorkerRouter.post(
+  "/mark/uninfected",
+  async (req: Request, res: Response) => {
+    const request = (
+      await db
+        .doc(`${FARM_REPORTS_COLLECTION_NAME}/${req.body.requestId}`)
+        .get()
+    ).data();
+
+    if (!request) {
+      return res.status(404).json({
+        message: "Invalid requestId, request not found.",
+        success: false,
+      });
+    }
+
+    if (request.avianResult != true) {
+      return res.status(404).json({
+        message: "Avian results false, can't mark uninfected",
+        success: false,
+      });
+    }
+
+    const batchesAssociatedWithFarm = (
+      await batchCollection.where("farmerId", "==", request.farmId).get()
+    ).docs;
+
+    await changeInfectedTo(false, batchesAssociatedWithFarm);
+    res
+      .status(200)
+      .json({ message: "Marked stakeholders uinfected", success: true });
+    try {
     } catch (error) {
       console.log(error);
       res.status(500).json({
@@ -230,7 +346,7 @@ healthWorkerRouter.get(
       );
       const sellerData = await db.doc(`Users/${sellerDocId}`).get();
       if (!sellerData.data()) {
-        console.log("SELLECT_NOT_FOUND")
+        console.log("SELLECT_NOT_FOUND");
         return res
           .status(404)
           .json({ success: false, message: "Seller not found" });

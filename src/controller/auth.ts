@@ -250,8 +250,7 @@ authRouter.post(
       const healthWorker: HealthWorker = {
         assignedAt: new Date(),
         email: req.body.email,
-        firstName: req.body.firstName,
-        lastName: req.body.lastName,
+        fullName: req.body.fullName,
         phoneNumber: req.body.lastName,
         userId: req.session.userData.firebaseAuthUid,
       };

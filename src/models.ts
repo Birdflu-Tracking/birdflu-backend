@@ -3,7 +3,7 @@ import { DocumentReference, Timestamp, v1 } from "@google-cloud/firestore";
 
 export type User = {
   userId: string;
-  fullName:string,
+  fullName: string;
   email: string;
   phoneNumber: number;
   outletAddress: string;
@@ -15,8 +15,7 @@ export type User = {
 };
 
 export type HealthWorker = {
-  firstName: string;
-  lastName: string;
+  fullName: string;
   email: string;
   phoneNumber: number;
   userId: string;

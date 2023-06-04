@@ -158,7 +158,6 @@ userRouter.post("/farmer/report", async (req: Request, res: Response) => {
     } else if (report.submitted == true) {
       throw new Error("Report already submitted.");
     }
-    let results = 0;
     let allPromise = req.body.chickenSymptoms.map(async (d: any) => {
       return (
         await axios.post("http://localhost:5000/predict", { symptoms: d })
