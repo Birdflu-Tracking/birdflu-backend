@@ -246,18 +246,30 @@ healthWorkerRouter.get(
  * This route will be used to get user reports
  * by the health worker.
  */
-healthWorkerRouter.get("reports/users", async (req: Request, res: Response) => {
-  try {
-    // Seller name, root farm name, number of reports
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      message: "Error while getting user reports",
-      error: error.message,
-      success: false,
-    });
+healthWorkerRouter.get(
+  "/reports/users",
+  async (req: Request, res: Response) => {
+    try {
+      const sellerReports: Array<Object> = [];
+      const sellerReportsRefs = await userReportsCollection.get();
+
+      await Promise.all(
+        sellerReportsRefs.docs.map((sellerReport) =>
+          sellerReports.push(sellerReport.data())
+        )
+      );
+
+      return res.status(200).json({ sellerReports, success: true });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({
+        message: "Error while getting user reports",
+        error: error.message,
+        success: false,
+      });
+    }
   }
-});
+);
 
 /**
  * This route will be used by health worker
