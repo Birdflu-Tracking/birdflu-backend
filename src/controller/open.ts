@@ -3,6 +3,7 @@ import { ResponseCodes } from "../lib/utils";
 import { User, UserReports } from "../models";
 import { Timestamp } from "@google-cloud/firestore";
 import { userCollection, userReportsCollection } from "../services/initDb";
+import { firestore } from "firebase-admin";
 
 export const openRouter = Router();
 
@@ -126,3 +127,37 @@ openRouter.get(
     }
   }
 );
+
+openRouter.get("/active-cases", async (req: Request, res: Response) => {
+  try {
+    const activeCases: Array<firestore.DocumentData> = [];
+    const infectedSellers = await userCollection
+      .where("infected", "==", true)
+      .get();
+
+    await Promise.all(
+      infectedSellers.docs.map(async (infectedSeller) => {
+        const userReports = await userReportsCollection
+          .where("poultryShopDocId", "==", infectedSeller.id)
+          .get();
+
+        await Promise.all(
+          userReports.docs.map((doc) => {
+            activeCases.push(doc.data());
+          })
+        );
+      })
+    );
+
+    return res
+      .status(200)
+      .json({ activeCases: { count: activeCases.length, users: activeCases } });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error while getting seller shops",
+      success: false,
+      resCode: ResponseCodes.INTERNAL_SERVER_ERROR,
+      error: error.message,
+    });
+  }
+});

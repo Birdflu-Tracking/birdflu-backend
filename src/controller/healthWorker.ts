@@ -125,7 +125,7 @@ healthWorkerRouter.post(
     }
 
     if (request.avianResult != true) {
-      return res.status(404).json({
+      return res.status(400).json({
         message: "Avian results false, can't mark infected",
         success: false,
       });
@@ -171,13 +171,6 @@ healthWorkerRouter.post(
     if (!request) {
       return res.status(404).json({
         message: "Invalid requestId, request not found.",
-        success: false,
-      });
-    }
-
-    if (request.avianResult != true) {
-      return res.status(404).json({
-        message: "Avian results false, can't mark uninfected",
         success: false,
       });
     }
@@ -388,6 +381,49 @@ healthWorkerRouter.get(
       console.log(error);
       res.status(500).json({
         message: "Error while reports of the poultry shop",
+        error: error.message,
+        success: false,
+      });
+    }
+  }
+);
+
+healthWorkerRouter.get(
+  "/current/requests",
+  async (req: Request, res: Response) => {
+    try {
+      const reports: { submitted: Array<object>; notSubmitted: Array<object> } =
+        { submitted: [], notSubmitted: [] };
+
+      await Promise.all(
+        (
+          await farmReportsCollection.get()
+        ).docs.map(async (doc) => {
+          const farm = await db
+            .doc(`${USER_COLLECTION_NAME}/${doc.data().farmId}`)
+            .get();
+
+          if (doc.data().submitted == true) {
+            reports.submitted.push({
+              reportData: doc.data(),
+              reportId: doc.id,
+              farmData: farm.data(),
+            });
+          } else {
+            reports.notSubmitted.push({
+              reportData: doc.data(),
+              reportId: doc.id,
+              farmData: farm.data(),
+            });
+          }
+        })
+      );
+
+      res.status(200).json({ reports: reports, success: true });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({
+        message: "Error while getting current requests",
         error: error.message,
         success: false,
       });
