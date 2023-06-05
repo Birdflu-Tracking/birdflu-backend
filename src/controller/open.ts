@@ -119,7 +119,7 @@ openRouter.get(
     } catch (error) {
       console.log(error);
       res.status(500).json({
-        message: "Error while getting seller shops",
+        message: "Error while getting infected stakeholders",
         success: false,
         resCode: ResponseCodes.INTERNAL_SERVER_ERROR,
         error: error.message,
@@ -127,6 +127,48 @@ openRouter.get(
     }
   }
 );
+
+openRouter.get("/stakeholders", async (req: Request, res: Response) => {
+  try {
+    const infectedUsers: {
+      farmer: Array<Object>;
+      seller: Array<Object>;
+      distributor: Array<Object>;
+    } = { farmer: [], distributor: [], seller: [] };
+
+    const users = (await userCollection.get()).docs;
+
+    await Promise.all(
+      users.map((user) => {
+        const data = user.data();
+        // Reflect.deleteProperty(data, "userId")
+        switch (user.data().type) {
+          case "farmer":
+            infectedUsers.farmer.push(data);
+            break;
+          case "distributor":
+            infectedUsers.distributor.push(data);
+            break;
+          case "seller":
+            infectedUsers.seller.push(data);
+            break;
+        }
+      })
+    );
+
+    res
+      .status(200)
+      .json({ message: "Got stakeholders", infectedUsers });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Error while getting stakeholders",
+      success: false,
+      resCode: ResponseCodes.INTERNAL_SERVER_ERROR,
+      error: error.message,
+    });
+  }
+});
 
 openRouter.get("/active-cases", async (req: Request, res: Response) => {
   try {
