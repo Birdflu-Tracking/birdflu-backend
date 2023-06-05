@@ -36,6 +36,7 @@ export type UserReports = {
   reporterName: string;
   createdAt: Timestamp;
   address: string;
+  cords:[number,number];
   phoneNumber: number;
   poultryShopName: string;
   poultryShopDocId: string;

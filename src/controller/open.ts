@@ -28,6 +28,7 @@ openRouter.post("/submit-flu-report", async (req: Request, res: Response) => {
       reporterName: req.body.reporterName,
       phoneNumber: Number(req.body.phoneNumber),
       address: req.body.address,
+      cords:req.body.cords,
       createdAt: Timestamp.now(),
       poultryShopName: req.body.poultryShopName,
       poultryShopDocId: req.body.poultryShopDocId,
