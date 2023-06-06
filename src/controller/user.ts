@@ -324,6 +324,7 @@ userRouter.get(
 
         res.status(200).json({
           totalBatchesGenerated: batchDocs.length,
+          soldBatches:soldBatches.docs.map(d=>d.data()),
           totalBatchesSold: soldBatches.docs.length,
           totalChickensSold: chickenSold,
           success: true,
@@ -344,6 +345,7 @@ userRouter.get(
 
         res.status(200).json({
           totalBatches: batchDocs.length,
+          soldBatches,
           totalBatchesSold: soldBatches.length,
           success: true,
         });
