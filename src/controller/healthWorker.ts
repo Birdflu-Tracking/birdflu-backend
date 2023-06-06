@@ -31,6 +31,10 @@ healthWorkerRouter.post(
         await db.doc(`${USER_COLLECTION_NAME}/${req.body.farmId}`).get()
       ).data();
 
+      if (!farm) {
+        throw new Error("Farmer not found!");
+      }
+
       if (farm.type != "farmer") {
         return res.status(500).json({
           message: "Invalid farmId, user not a farmer",
@@ -295,27 +299,31 @@ healthWorkerRouter.get(
       await Promise.all(
         reportedSellerIds.map(async (sellerId) => {
           var seller = await db.doc(`Users/${sellerId}`).get();
-          var batches = await batchCollection
-            .where("sellerId", "==", sellerId)
-            .get();
+          if (seller.data()) {
+            var batches = await batchCollection
+              .where("sellerId", "==", sellerId)
+              .get();
 
-          await Promise.all(
-            batches.docs.map(async (batch) => {
-              var farm = await db.doc(`Users/${batch.data().farmerId}`).get();
-              if (
-                results.filter((result) => result.rootFarmId == farm.id)
-                  .length == 0
-              ) {
-                results.push({
-                  sellerName: seller.data().outletName,
-                  rootFarmId: farm.id,
-                  rootFarmName: farm.data().outletName,
-                  count: getCounts(reportedSellerIds, sellerId),
-                  sellerId: seller.id,
-                });
-              }
-            })
-          );
+            await Promise.all(
+              batches.docs.map(async (batch) => {
+                var farm = await db.doc(`Users/${batch.data().farmerId}`).get();
+                if (farm.data()) {
+                  if (
+                    results.filter((result) => result.rootFarmId == farm.id)
+                      .length == 0
+                  ) {
+                    results.push({
+                      sellerName: seller.data().outletName,
+                      rootFarmId: farm.id,
+                      rootFarmName: farm.data().outletName,
+                      count: getCounts(reportedSellerIds, sellerId),
+                      sellerId: seller.id,
+                    });
+                  }
+                }
+              })
+            );
+          }
         })
       );
 
@@ -351,7 +359,6 @@ healthWorkerRouter.get(
       );
       const sellerData = await db.doc(`Users/${sellerDocId}`).get();
       if (!sellerData.data()) {
-        console.log("SELLECT_NOT_FOUND");
         return res
           .status(404)
           .json({ success: false, message: "Seller not found" });
@@ -368,7 +375,7 @@ healthWorkerRouter.get(
               const farm = await db.doc(`Users/${batch.data().farmerId}`).get();
               if (
                 farms.filter((farm) => farm.farmId == batch.data().farmerId)
-                  .length == 0
+                  .length == 0 && farm.data()
               ) {
                 farms.push({
                   farmId: batch.data().farmerId,
@@ -415,18 +422,20 @@ healthWorkerRouter.get(
             .doc(`${USER_COLLECTION_NAME}/${doc.data().farmId}`)
             .get();
 
-          if (doc.data().submitted == true) {
-            reports.submitted.push({
-              reportData: doc.data(),
-              reportId: doc.id,
-              farmData: farm.data(),
-            });
-          } else {
-            reports.notSubmitted.push({
-              reportData: doc.data(),
-              reportId: doc.id,
-              farmData: farm.data(),
-            });
+          if (farm.data()) {
+            if (doc.data().submitted == true) {
+              reports.submitted.push({
+                reportData: doc.data(),
+                reportId: doc.id,
+                farmData: farm.data(),
+              });
+            } else {
+              reports.notSubmitted.push({
+                reportData: doc.data(),
+                reportId: doc.id,
+                farmData: farm.data(),
+              });
+            }
           }
         })
       );

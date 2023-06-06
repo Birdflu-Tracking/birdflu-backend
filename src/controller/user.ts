@@ -102,12 +102,17 @@ userRouter.post("/transfer/batch", async (req: Request, res: Response) => {
     const nfcDoc = (
       await nfcTagCollection.where("nfcCode", "==", nfcCode).get()
     ).docs[0].data();
+    if (!nfcDoc) {
+      throw new Error(
+        `NFC Tag not found for userId ${req.session.userData.userDocId}`
+      );
+    }
     console.log(nfcDoc);
     if (!batchData.distributorId || !batchData.sellerId) {
       await isBatchOwnedbyUser(batchData, req.session.userData.userDocId);
       const transferredBatch = await transferBatch(
         nfcDoc.type,
-        nfcDoc.userId, // docId
+        nfcDoc.userDocId, // docId
         batchId
       );
       !transferredBatch
@@ -168,8 +173,9 @@ userRouter.post("/farmer/report", async (req: Request, res: Response) => {
       accumulator[value] = ++accumulator[value] || 1;
       return accumulator;
     }, {});
-    const finalResult = Object.keys(count).filter((d) => count[d] >= 3)[0]||"";
-    console.log(finalResult)
+    const finalResult =
+      Object.keys(count).filter((d) => count[d] >= 3)[0] || "";
+    console.log(finalResult);
     const createdReport = await createSymptomReport(
       finalResult == "avian_influenza" ? true : false,
       finalResult,
@@ -367,7 +373,7 @@ userRouter.get("/current/requests", async (req: Request, res: Response) => {
         .json({ message: "Only a farmer can make this request" });
     }
     console.log("farmId", "==", req.session.userData.firebaseAuthUid);
-    console.log(req.session.userData.userDocId)
+    console.log(req.session.userData.userDocId);
     const reports: Array<object> = [];
     (
       await farmReportsCollection
