@@ -36,11 +36,12 @@ export type UserReports = {
   reporterName: string;
   createdAt: Timestamp;
   address: string;
-  cords:[number,number];
+  cords: [number, number];
   phoneNumber: number;
   poultryShopName: string;
   poultryShopDocId: string;
   symptomStartDate: Date;
+  doctorLetterUrl: string;
 };
 
 export type FarmReports = {

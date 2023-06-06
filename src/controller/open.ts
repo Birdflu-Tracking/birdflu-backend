@@ -19,6 +19,7 @@ export const openRouter = Router();
  *  address: string,
  *  poultryShopName: string,
  *  poultryShopDocId: string
+ *  doctorLetterUrl: string
  * }
  */
 openRouter.post("/submit-flu-report", async (req: Request, res: Response) => {
@@ -28,11 +29,12 @@ openRouter.post("/submit-flu-report", async (req: Request, res: Response) => {
       reporterName: req.body.reporterName,
       phoneNumber: Number(req.body.phoneNumber),
       address: req.body.address,
-      cords:req.body.cords,
+      cords: req.body.cords,
       createdAt: Timestamp.now(),
       poultryShopName: req.body.poultryShopName,
       poultryShopDocId: req.body.poultryShopDocId,
       symptomStartDate: new Date(req.body.symptomStartDate),
+      doctorLetterUrl: req.body.doctorLetterUrl,
     };
 
     const addedReportDocRef = await userReportsCollection.add(userReport);
@@ -157,9 +159,7 @@ openRouter.get("/stakeholders", async (req: Request, res: Response) => {
       })
     );
 
-    res
-      .status(200)
-      .json({ message: "Got stakeholders", infectedUsers });
+    res.status(200).json({ message: "Got stakeholders", infectedUsers });
   } catch (error) {
     console.log(error);
     res.status(500).json({
