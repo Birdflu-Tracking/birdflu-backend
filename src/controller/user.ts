@@ -330,7 +330,7 @@ userRouter.get(
 
         res.status(200).json({
           totalBatchesGenerated: batchDocs.length,
-          soldBatches:soldBatches.docs.map(d=>d.data()),
+          soldBatches: soldBatches.docs.map((d) => d.data()),
           totalBatchesSold: soldBatches.docs.length,
           totalChickensSold: chickenSold,
           success: true,
@@ -342,18 +342,23 @@ userRouter.get(
             .get()
         ).docs;
 
-        const soldBatches = (
-          await batchCollection
-            .where("distributorId", "==", req.session.userData.userDocId)
-            .where("sellerId", "!=", "null")
-            .get()
+        var chickenSold = 0;
+        const soldBatches = await batchCollection
+          .where("distributorId", "==", req.session.userData.userDocId)
+          .where("sellerId", "!=", "null")
+          .get();
+
+        await Promise.all(
+          soldBatches.docs.map(
+            (batch) => (chickenSold += batch.data().batchSize)
+          )
         );
 
         res.status(200).json({
           totalBatchesGenerated: batchDocs.length,
-          soldBatches:soldBatches.docs.map(d=>d.data()),
+          soldBatches: soldBatches.docs.map((d) => d.data()),
           totalBatchesSold: soldBatches.docs.length,
-          totalChickensSold: chickenSold,
+          totalChickensSold: chickenSold || 0,
           success: true,
         });
       }
