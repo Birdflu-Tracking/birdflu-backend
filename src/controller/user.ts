@@ -347,12 +347,13 @@ userRouter.get(
             .where("distributorId", "==", req.session.userData.userDocId)
             .where("sellerId", "!=", "null")
             .get()
-        ).docs;
+        );
 
         res.status(200).json({
-          totalBatches: batchDocs.length,
-          soldBatches,
-          totalBatchesSold: soldBatches.length,
+          totalBatchesGenerated: batchDocs.length,
+          soldBatches:soldBatches.docs.map(d=>d.data()),
+          totalBatchesSold: soldBatches.docs.length,
+          totalChickensSold: chickenSold,
           success: true,
         });
       }
